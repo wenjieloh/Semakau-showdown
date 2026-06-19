@@ -4,142 +4,25 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Semakau Showdown</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: radial-gradient(circle at top, #0d2b3e 0%, #061826 60%, #04101c 100%);
-    color: #fff;
-    padding: 1.5rem;
-    min-height: 100vh;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; }
-
-  /* HEADER */
-  .hero { text-align: center; margin-bottom: 1.5rem; }
-  .hero h1 {
-    font-size: 34px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: #ffd23f;
-    text-shadow: 0 0 10px rgba(255,210,63,0.6), 0 0 24px rgba(255,210,63,0.3);
-    text-transform: uppercase;
-  }
-  .hero p { color: #9fd8c4; font-size: 14px; margin-top: 6px; }
-
-  /* MASCOT */
-  .mascot-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 1rem 0 1.5rem; flex-wrap: wrap; }
-  .mascot-face { font-size: 40px; animation: bob 2s ease-in-out infinite; }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-  .mascot-speech {
-    background: #102a3a; border: 2px solid #1d9e75; border-radius: 16px;
-    padding: 10px 16px; font-size: 13px; max-width: 480px; color: #d7f5e8;
-    position: relative;
-  }
-  .mascot-speech::before {
-    content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
-    border: 8px solid transparent; border-right-color: #1d9e75;
-  }
-
-  /* SCOREBOARD - podium style */
-  .scoreboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-  .score-card {
-    background: linear-gradient(180deg, #14344a, #0c2335);
-    border: 2px solid #1d4e63; border-radius: 14px; padding: 14px; text-align: center;
-    transition: all 0.25s;
-  }
-  .score-card.active {
-    border-color: #ffd23f; box-shadow: 0 0 18px rgba(255,210,63,0.4);
-    transform: translateY(-4px);
-  }
-  .team-name { font-size: 12px; color: #8fb8cc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .team-score { font-size: 30px; font-weight: 800; }
-  .team-badge { display: inline-block; font-size: 10px; padding: 3px 10px; border-radius: 20px; margin-top: 6px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-
-  .turn-indicator { text-align: center; font-size: 14px; color: #ffd23f; margin-bottom: 1.25rem; font-weight: 600; }
-
-  /* BOARD */
-  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.5rem; }
-  .cat-header {
-    background: linear-gradient(180deg, #1d9e75, #0f6e56);
-    border-radius: 10px; padding: 12px 6px; text-align: center;
-    min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-    border: 2px solid #2bc492;
-  }
-  .cat-icon { font-size: 20px; }
-  .cat-name { font-size: 11px; font-weight: 700; color: #eafff5; line-height: 1.25; text-transform: uppercase; letter-spacing: 0.3px; }
-
-  .cell {
-    background: linear-gradient(180deg, #133a52, #0a2538);
-    border: 2px solid #2563eb33; border-radius: 10px;
-    text-align: center; cursor: pointer;
-    font-size: 20px; font-weight: 800; color: #ffd23f;
-    min-height: 56px; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .cell:hover { background: linear-gradient(180deg, #1c4d6c, #0f3047); border-color: #ffd23f; transform: scale(1.04); }
-  .cell.used { background: #0a1722; color: #355068; border-color: #1a2c3a; cursor: default; font-size: 22px; }
-
-  /* MODAL */
-  .overlay { position: fixed; inset: 0; background: rgba(2,8,14,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
-  .modal {
-    background: linear-gradient(180deg, #122e42, #081b2a);
-    border-radius: 18px; border: 2px solid #1d9e75;
-    width: 100%; max-width: 600px; padding: 1.75rem;
-    box-shadow: 0 0 40px rgba(29,158,117,0.25);
-  }
-  .modal-tag { font-size: 11px; color: #6fb8d4; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-  .modal-pts { font-size: 15px; font-weight: 800; color: #ffd23f; margin-bottom: 14px; }
-  .modal-question { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.5; margin-bottom: 1.25rem; }
-  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
-  .opt-btn {
-    background: #0e2738; border: 2px solid #2563eb33; border-radius: 10px;
-    padding: 14px; text-align: left; font-size: 13px; color: #e8f4fa; cursor: pointer; line-height: 1.4;
-    font-weight: 600;
-  }
-  .opt-btn:hover:not([disabled]) { background: #15334a; border-color: #ffd23f; }
-  .opt-btn.correct { background: #163d24; border-color: #4ade80; color: #bbf7d0; }
-  .opt-btn.wrong { background: #3d1616; border-color: #f87171; color: #fecaca; }
-
-  .result-box { border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; margin-bottom: 1rem; }
-  .result-box.correct { background: #163d24; color: #bbf7d0; border: 1px solid #4ade80; }
-  .result-box.wrong { background: #3d1616; color: #fecaca; border: 1px solid #f87171; }
-  .result-box.trick { background: #3d3416; color: #fde68a; border: 1px solid #facc15; }
-  .fact-tag { display: inline-block; font-size: 10px; font-weight: 700; color: #0a1722; background: #ffd23f; padding: 2px 8px; border-radius: 6px; margin-bottom: 6px; text-transform: uppercase; }
-
-  .mascot-react { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
-  .mascot-react .mface { font-size: 28px; }
-  .mascot-react .mtext { font-size: 12px; color: #9fd8c4; font-style: italic; }
-
-  .modal-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .team-select { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .team-btn { font-size: 12px; padding: 6px 12px; border-radius: 8px; border: 2px solid #2563eb33; background: #0e2738; color: #e8f4fa; cursor: pointer; font-weight: 600; }
-  .team-btn.selected { background: #ffd23f; border-color: #ffd23f; color: #0a1722; }
-  .close-btn { font-size: 13px; padding: 8px 16px; border-radius: 10px; border: 2px solid #2563eb33; background: transparent; color: #cdd; cursor: pointer; font-weight: 600; }
-  .award-btn { font-size: 13px; padding: 8px 18px; border-radius: 10px; border: 2px solid #1d9e75; background: #1d9e75; color: #04342c; cursor: pointer; font-weight: 800; }
-
-  .win-banner {
-    text-align: center; font-size: 22px; font-weight: 800; padding: 1.5rem;
-    background: linear-gradient(180deg, #1d4e63, #0c2335); border-radius: 16px;
-    border: 2px solid #ffd23f; color: #ffd23f; margin-top: 1rem;
-    text-shadow: 0 0 12px rgba(255,210,63,0.5);
-  }
-  .sound-toggle {
-    position: absolute; top: 0; right: 0; background: #0e2738; border: 2px solid #2563eb33;
-    border-radius: 10px; padding: 6px 10px; cursor: pointer; font-size: 14px; color: #fff;
-  }
-  .hero-row { position: relative; }
-</style>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="wrap">
 
   <div class="hero-row">
     <div class="hero">
-      <h1>♻️ Semakau Showdown</h1>
-      <p>Guess which habit sends more plastic to Singapore's last landfill</p>
+      <h1 id="gameTitle">Semakau Showdown</h1>
+      <p id="gameSub">Guess which habit sends more plastic to Singapore's last landfill</p>
     </div>
-    <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+    <div class="top-controls">
+      <select id="langSelect" onchange="setLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+        <option value="ms">Bahasa Melayu</option>
+        <option value="ta">தமிழ்</option>
+      </select>
+      <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+    </div>
   </div>
 
   <div class="mascot-bar">
@@ -147,269 +30,35 @@
     <div class="mascot-speech" id="mascotIntro">Eh, welcome lah! I'm Bin Bin. I live at Semakau and I see EVERYTHING you throw away. Let's see who really knows their rubbish!</div>
   </div>
 
+  <div class="island-section">
+    <div class="island-label" id="islandLabel">Pulau Semakau health</div>
+    <svg id="islandSvg" viewBox="0 0 300 140" class="island-svg">
+      <ellipse cx="150" cy="70" rx="130" ry="55" id="islandShape" fill="#2bc492" />
+      <ellipse cx="150" cy="70" rx="130" ry="55" fill="none" stroke="#0a2538" stroke-width="3" />
+      <text x="150" y="75" id="islandFace" font-size="40" text-anchor="middle">🙂</text>
+    </svg>
+    <div class="damage-bar-track">
+      <div class="damage-bar-fill" id="damageBarFill"></div>
+    </div>
+    <div class="damage-text" id="damageText">0 of 10 strikes — island is healthy</div>
+  </div>
+
   <div class="scoreboard" id="scoreboard"></div>
   <div class="turn-indicator" id="turn-indicator"></div>
   <div class="board" id="board"></div>
   <div id="win-banner"></div>
+  <div id="statsScreen"></div>
 </div>
 
 <div class="overlay" id="overlay" style="display:none;">
   <div class="modal" id="modal"></div>
 </div>
 
-<script>
-  /* ---------- SOUND (Web Audio, no files needed) ---------- */
-  let soundOn = true;
-  let audioCtx = null;
-  function getCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-  }
-  function beep(freq, duration, type, vol) {
-    if (!soundOn) return;
-    const ctx = getCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type || 'sine';
-    osc.frequency.value = freq;
-    gain.gain.value = vol || 0.15;
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    osc.stop(ctx.currentTime + duration);
-  }
-  function playCorrect() { beep(523, 0.12, 'sine'); setTimeout(() => beep(784, 0.18, 'sine'), 110); }
-  function playWrong() { beep(180, 0.3, 'sawtooth', 0.12); }
-  function playClick() { beep(660, 0.06, 'square', 0.08); }
-  function playTrick() { beep(440, 0.1, 'triangle'); setTimeout(() => beep(330, 0.1, 'triangle'), 100); setTimeout(() => beep(440, 0.15, 'triangle'), 200); }
-  function toggleSound() {
-    soundOn = !soundOn;
-    document.getElementById('soundToggle').textContent = soundOn ? '🔊' : '🔇';
-  }
+<div class="overlay" id="bonusOverlay" style="display:none;">
+  <div class="modal bonus-modal" id="bonusModal"></div>
+</div>
 
-  /* ---------- GAME DATA ---------- */
-  const CATEGORIES = [
-    { name: "Hawker Centre Da Bao", icon: "🥡" },
-    { name: "Supermarket Shopping", icon: "🛒" },
-    { name: "Online Shopping & Delivery", icon: "📦" },
-    { name: "Everyday Lifestyle", icon: "🌏" }
-  ];
-
-  const QUESTIONS = [
-    [
-      { q: "Buying takeaway food in a plastic container vs eating dine-in on reusable plates — which generates more plastic waste?", a: 0, opts: ["Plastic takeaway container 🥡", "Dine-in on reusable plates 🍽️"],
-        fact: "Singapore generated 868,000 tonnes of plastic waste in a single year — but only 4% of it gets recycled. Takeaway containers are food-contaminated, so almost all of it heads straight to Semakau.",
-        mascot: "Wah, every da bao box is one-way ticket to my house lor!" },
-      { q: "Grabbing a plastic carrier bag for your da bao vs carrying the container by hand — which uses more single-use plastic?", a: 0, opts: ["Plastic carrier bag 🛍️", "Carry by hand 🤲"],
-        fact: "Plastic bags are designed for one trip home and then they're rubbish. Skipping the bag is the easiest plastic save of your whole day.",
-        mascot: "One extra bag, one extra thing for me to swallow!" },
-      { q: "Accepting a bundle of plastic cutlery (spoon, fork, chopsticks) vs using your own reusable set — which generates more non-recyclable plastic?", a: 0, opts: ["Plastic cutlery bundle 🥄", "Reusable set 🥢"],
-        fact: "A cutlery bundle is actually 3 separate plastic items in one wrapper. None of it survives contact with food, so none of it can be recycled.",
-        mascot: "3 in 1 package, but all 3 end up with me!" },
-      { q: "Iced drink in a plastic cup with straw vs hot drink in a ceramic cup — which generates more single-use plastic?", a: 0, opts: ["Plastic cup + straw 🧋", "Ceramic cup ☕"],
-        fact: "Cup, lid, straw — that's three pieces of single-use plastic for one drink. A ceramic cup at the hawker centre generates zero.",
-        mascot: "Three pieces of plastic for ONE drink, you serious?" },
-      { q: "Packing chicken rice in a traditional brown paper packet (lined with plastic film) vs a thick clear plastic bento box — which sends more plastic by weight to Semakau?", a: 1, opts: ["Brown paper packet 📦", "Thick plastic bento box 🍱"],
-        fact: "Trick! The paper packet has a thin plastic lining too, but the rigid bento box has far more plastic mass overall. Weight matters at landfill scale.",
-        mascot: "Both got plastic lah, but the box is the heavyweight champion of rubbish." }
-    ],
-    [
-      { q: "Paying 5 cents for a plastic bag at FairPrice vs bringing your own reusable canvas bag — which wastes more single-use plastic?", a: 0, opts: ["Plastic bag from FairPrice 🛍️", "Reusable canvas bag 👜"],
-        fact: "Singapore's recycling rate for plastics sits at just 6%, even though over half of all waste types combined gets recycled. Every plastic bag is basically guaranteed landfill material.",
-        mascot: "5 cents to feed me a bag? Cheap for you, expensive for the planet." },
-      { q: "Buying apples pre-packed in a plastic bag with a styrofoam tray vs picking loose apples into your basket — which has a higher plastic packaging footprint?", a: 0, opts: ["Pre-packed apples 🍎", "Loose apples 🧺"],
-        fact: "Pre-packed fruit stacks a plastic bag AND a styrofoam tray on top of food that didn't need either. Two waste streams for the price of one apple.",
-        mascot: "Apple don't need a costume, sia." },
-      { q: "Buying liquid hand soap in a new plastic pump bottle vs a refill pouch — which generates more rigid plastic waste?", a: 0, opts: ["New pump bottle 🧴", "Refill pouch 🫙"],
-        fact: "Rigid pump bottles use far more plastic by weight than thin refill pouches. Reusing the bottle and just refilling cuts your plastic footprint dramatically.",
-        mascot: "Keep the bottle, just top it up — your bottle don't need to retire every month!" },
-      { q: "Buying individual small snack packs inside a giant bag vs one large economy-sized pack — which produces more non-recyclable plastic wrappers?", a: 0, opts: ["Individual small snack packs 🍬", "One large economy pack 📦"],
-        fact: "Each tiny snack pack is its own non-recyclable wrapper. Twenty mini packs means twenty pieces of plastic film instead of just one.",
-        mascot: "20 wrappers for one craving? I'm drowning in confetti here." },
-      { q: "Buying individually cling-wrapped cucumbers vs unwrapped local cucumbers — which generates more low-density polyethylene film that clogs recycling machines?", a: 0, opts: ["Cling-wrapped cucumbers 🥒", "Unwrapped cucumbers 🌿"],
-        fact: "Cling film (LDPE) is one of the worst materials for recycling facilities — it jams the machines and contaminates entire batches, so it's rejected outright and sent to Semakau.", 
-        mascot: "Cucumber got skin already, why wrap again?!" }
-    ],
-    [
-      { q: "Ordering bubble tea via Foodpanda with the 'opt-out of cutlery' toggle turned OFF vs turned ON — which generates more immediate plastic waste?", a: 0, opts: ["Opt-out toggle OFF 🧋", "Opt-out toggle ON ✅"],
-        fact: "Leaving that toggle off auto-adds a straw and utensils you probably don't even need. One tap in the app saves real plastic, every single order.",
-        mascot: "One small toggle, one less straw in my belly. Easy win!" },
-      { q: "Ordering a small item online with polymailer and bubble wrap vs buying it from a physical retail store — which generates more shipping plastic waste?", a: 0, opts: ["Online order with packaging 📦", "Buy from physical store 🏪"],
-        fact: "Online orders stack polymailers, bubble wrap, and tape — layers of plastic that a shelf purchase skips entirely.",
-        mascot: "So much bubble wrap just for one phone case, walao." },
-      { q: "Ordering groceries online packed in multiple red plastic carrier bags vs visiting the supermarket with a trolley — which accumulates more single-use bags?", a: 0, opts: ["Online grocery delivery 🛒", "Supermarket with trolley 🧺"],
-        fact: "Online grocery runs often arrive split across several single-use bags by default. A trolley at the store uses zero bags until you choose to.",
-        mascot: "Why I get 6 bags for 6 items leh? Combine can already!" },
-      { q: "Standard e-commerce shipping (items packed individually with plastic air pillows) vs consolidated shipping (all in one box) — which generates more packaging waste?", a: 0, opts: ["Standard individual shipping 📬", "Consolidated shipping 📦"],
-        fact: "Splitting one order into separate shipments multiplies the air pillows, tape, and boxes. Consolidating saves packaging and fewer delivery trips too.",
-        mascot: "3 boxes for 3 items that could've shared ONE box. I see you." },
-      { q: "Ordering daily food delivery in disposable containers for a week vs cooking at home — which generates more contaminated non-recyclable plastic?", a: 0, opts: ["Daily food delivery 🛵", "Cooking at home 🍳"],
-        fact: "Seven days of delivery means seven-plus containers, lids, bags, and cutlery packs — all food-contaminated and impossible to recycle.",
-        mascot: "A week of delivery and my house is FULL, can you imagine?" }
-    ],
-    [
-      { q: "Drinking imported bottled mineral water every day vs drinking from a reusable flask — which generates more PET bottle waste?", a: 0, opts: ["Bottled mineral water 💧", "Reusable flask 🫗"],
-        fact: "One bottle a day adds up to over 300 PET bottles a year, per person. Singapore's tap water is safe to drink, so a flask skips that entirely.",
-        mascot: "365 bottles a year just for water that comes free from your tap!" },
-      { q: "Using disposable plastic wet wipes to clean your hands vs washing with soap and water — which generates more plastic microfibre waste?", a: 0, opts: ["Disposable wet wipes 🧻", "Soap and water 🫧"],
-        fact: "Most wet wipes are woven from plastic fibres like polyester, so they don't biodegrade — they're effectively plastic waste disguised as tissue.",
-        mascot: "Wipes look soft but they're sneaky plastic in disguise!" },
-      { q: "Buying single-use plastic rain ponchos during a sudden downpour vs carrying a compact reusable umbrella — which generates more bulk plastic waste?", a: 0, opts: ["Disposable rain poncho 🌧️", "Reusable umbrella ☂️"],
-        fact: "A poncho is thick single-use plastic film that's worn once and binned. An umbrella does the same job for years.",
-        mascot: "One rainy day, one poncho, one trip to my landfill. Every time." },
-      { q: "Using a plastic trash bag vs a biodegradable cornstarch bag for your home waste bin — which sends more plastic to Semakau?", a: 2, opts: ["Plastic trash bag 🗑️", "Biodegradable cornstarch bag 🌽"],
-        fact: "Trick question! Singapore incinerates basically all household trash before it ever reaches me. Incineration cuts the volume by up to 90%, but the leftover ash from BOTH bag types still ends up at Semakau. Neither bag wins this one.",
-        isTrick: true,
-        mascot: "Plastic bag or corn bag, both end up as ash in my backyard either way!" },
-      { q: "Throwing unwashed, oily plastic containers into the blue recycling bin vs washing them first — which ultimately sends more plastic to Semakau?", a: 0, opts: ["Unwashed oily containers ♻️", "Washed containers ✅"],
-        fact: "One greasy container can contaminate an entire recycling bin, causing everything in it to get rejected and redirected straight to me. A 30-second rinse can save a whole bin's worth of recyclables.",
-        mascot: "One oily box ruins everybody's good recycling. Wash first, please!" }
-    ]
-  ];
-
-  const POINTS = [100, 200, 300, 400, 500];
-  const TEAMS = ["Team 1", "Team 2", "Team 3"];
-  const TEAM_COLORS = ["#60a5fa", "#34d399", "#fb923c"];
-
-  let scores = [0, 0, 0];
-  let used = Array.from({length: 4}, () => Array(5).fill(false));
-  let currentTeam = 0;
-  let currentCell = null;
-  let selectedTeamForAward = 0;
-
-  function renderScoreboard() {
-    document.getElementById('scoreboard').innerHTML = TEAMS.map((t, i) => `
-      <div class="score-card ${i === currentTeam ? 'active' : ''}">
-        <div class="team-name">${t}</div>
-        <div class="team-score" style="color:${TEAM_COLORS[i]}">${scores[i]}</div>
-        <span class="team-badge" style="background:${TEAM_COLORS[i]}22;color:${TEAM_COLORS[i]}">${i === currentTeam ? '▶ On the clock' : 'Waiting'}</span>
-      </div>
-    `).join('');
-    document.getElementById('turn-indicator').textContent = "🎯 " + TEAMS[currentTeam] + ", pick a category and point value!";
-  }
-
-  function renderBoard() {
-    let html = CATEGORIES.map(c => `<div class="cat-header"><span class="cat-icon">${c.icon}</span><span class="cat-name">${c.name}</span></div>`).join('');
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 4; c++) {
-        if (used[c][r]) {
-          html += `<div class="cell used">✓</div>`;
-        } else {
-          html += `<div class="cell" onclick="openQuestion(${c},${r})">${POINTS[r]}</div>`;
-        }
-      }
-    }
-    document.getElementById('board').innerHTML = html;
-  }
-
-  function openQuestion(cat, row) {
-    if (used[cat][row]) return;
-    playClick();
-    currentCell = { cat, row };
-    selectedTeamForAward = currentTeam;
-    const q = QUESTIONS[cat][row];
-    renderModal(q, POINTS[row], cat, false, null);
-  }
-
-  function renderModal(q, pts, cat, revealed, chosenIdx) {
-    document.getElementById('overlay').style.display = 'flex';
-    const optBtns = q.opts.map((o, i) => {
-      let cls = 'opt-btn';
-      if (revealed) {
-        if (q.a === 2) { cls += ' wrong'; }
-        else if (i === q.a) cls += ' correct';
-        else if (i === chosenIdx && i !== q.a) cls += ' wrong';
-      }
-      const handler = revealed ? 'disabled' : `onclick="answer(${i})"`;
-      return `<button class="${cls}" ${handler}>${o}</button>`;
-    }).join('');
-
-    let resultHtml = '';
-    let mascotHtml = '';
-    if (revealed) {
-      const isTrick = q.isTrick;
-      const isCorrect = !isTrick && chosenIdx === q.a;
-      const cls = isTrick ? 'trick' : (isCorrect ? 'correct' : 'wrong');
-      const label = isTrick ? '🤔 Trick question!' : (isCorrect ? '✅ Correct!' : '❌ Not quite!');
-      resultHtml = `<div class="result-box ${cls}"><span class="fact-tag">Real fact</span><br><strong>${label}</strong> ${q.fact}</div>`;
-      mascotHtml = `<div class="mascot-react"><div class="mface">🗑️</div><div class="mtext">"${q.mascot}"</div></div>`;
-    }
-
-    const teamBtns = TEAMS.map((t, i) =>
-      `<button class="team-btn ${selectedTeamForAward === i ? 'selected' : ''}" onclick="selectAwardTeam(${i})" id="atb-${i}">${t}</button>`
-    ).join('');
-
-    document.getElementById('modal').innerHTML = `
-      <div class="modal-tag">${CATEGORIES[cat].icon} ${CATEGORIES[cat].name}</div>
-      <div class="modal-pts">${pts} points</div>
-      <div class="modal-question">${q.q}</div>
-      <div class="options">${optBtns}</div>
-      ${mascotHtml}
-      ${resultHtml}
-      ${revealed ? `
-        <div style="font-size:13px;color:#9fd8c4;margin-bottom:8px">Award points to:</div>
-        <div class="modal-footer">
-          <div class="team-select">${teamBtns}</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="close-btn" onclick="closeModal(false)">Skip points</button>
-            <button class="award-btn" onclick="awardPoints()">Award ${pts} pts</button>
-          </div>
-        </div>
-      ` : `<div class="modal-footer"><button class="close-btn" onclick="closeModal(false)">Cancel</button></div>`}
-    `;
-  }
-
-  function answer(idx) {
-    const { cat, row } = currentCell;
-    const q = QUESTIONS[cat][row];
-    if (q.isTrick) {
-      playTrick();
-    } else if (idx === q.a) {
-      playCorrect();
-    } else {
-      playWrong();
-    }
-    renderModal(q, POINTS[row], cat, true, idx);
-  }
-
-  function selectAwardTeam(i) {
-    selectedTeamForAward = i;
-    TEAMS.forEach((_, idx) => {
-      const btn = document.getElementById('atb-' + idx);
-      if (btn) btn.className = 'team-btn' + (idx === i ? ' selected' : '');
-    });
-  }
-
-  function awardPoints() {
-    const { cat, row } = currentCell;
-    scores[selectedTeamForAward] += POINTS[row];
-    playClick();
-    closeModal(true);
-  }
-
-  function closeModal(markUsed) {
-    if (markUsed && currentCell) {
-      used[currentCell.cat][currentCell.row] = true;
-    }
-    currentTeam = (currentTeam + 1) % 3;
-    document.getElementById('overlay').style.display = 'none';
-    renderScoreboard();
-    renderBoard();
-    checkWin();
-  }
-
-  function checkWin() {
-    if (used.every(col => col.every(v => v))) {
-      const max = Math.max(...scores);
-      const winners = TEAMS.filter((_, i) => scores[i] === max);
-      playCorrect();
-      document.getElementById('win-banner').innerHTML =
-        `<div class="win-banner">🏆 GAME OVER! ${winners.join(' & ')} win${winners.length > 1 ? '' : 's'} with ${max} points!<br><span style="font-size:13px;color:#9fd8c4;font-weight:400">Bin Bin says: "Now go home and use less plastic ah!"</span></div>`;
-    }
-  }
-
-  renderScoreboard();
-  renderBoard();
-</script>
+<script src="i18n.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
