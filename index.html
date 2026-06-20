@@ -26,17 +26,13 @@
   </div>
 
   <div class="mascot-bar">
-    <div class="mascot-face">🗑️</div>
+    <div class="mascot-face" id="mascotFace">🗑️</div>
     <div class="mascot-speech" id="mascotIntro">Eh, welcome lah! I'm Bin Bin. I live at Semakau and I see EVERYTHING you throw away. Let's see who really knows their rubbish!</div>
   </div>
 
   <div class="island-section">
     <div class="island-label" id="islandLabel">Pulau Semakau health</div>
-    <svg id="islandSvg" viewBox="0 0 300 140" class="island-svg">
-      <ellipse cx="150" cy="70" rx="130" ry="55" id="islandShape" fill="#2bc492" />
-      <ellipse cx="150" cy="70" rx="130" ry="55" fill="none" stroke="#0a2538" stroke-width="3" />
-      <text x="150" y="75" id="islandFace" font-size="40" text-anchor="middle">🙂</text>
-    </svg>
+    <div class="island-stage" id="islandStage"></div>
     <div class="damage-bar-track">
       <div class="damage-bar-fill" id="damageBarFill"></div>
     </div>
@@ -54,16 +50,19 @@
   <div class="modal" id="modal"></div>
 </div>
 
-<div class="overlay" id="bonusOverlay" style="display:none;">
-  <div class="countdown-overlay" id="countdownOverlay" style="display:none;">
-  <div class="countdown-content">
-    <div class="countdown-warning-text" id="countdownWarningText">PULAU SEMAKAU IS DYING</div>
-    <div class="countdown-number" id="countdownNumber">3</div>
-    <div class="countdown-sub" id="countdownSub">Bonus round incoming...</div>
-  </div>
+<div class="freeze-overlay" id="freezeOverlay" style="display:none;">
+  <div class="freeze-text" id="freezeText"></div>
 </div>
+
+<div class="alarm-overlay" id="alarmOverlay" style="display:none;">
+  <div class="alarm-content" id="alarmContent"></div>
+</div>
+
+<div class="overlay" id="bonusOverlay" style="display:none;">
   <div class="modal bonus-modal" id="bonusModal"></div>
 </div>
+
+<div class="confetti-layer" id="confettiLayer"></div>
 
 <script src="i18n.js"></script>
 <script src="script.js"></script>
