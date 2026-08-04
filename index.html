@@ -3,11 +3,45 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Semakau Showdown — an interactive Jeopardy-style quiz game about plastic waste habits in Singapore, built around Pulau Semakau landfill." />
 <title>Semakau Showdown</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="wrap" id="wrap">
+
+<!-- ========== MODE SELECT ========== -->
+<div id="modeScreen" class="mode-screen">
+  <div class="mode-box">
+    <div class="mode-logo">♻️</div>
+    <h1 class="mode-title">Semakau Showdown</h1>
+    <p class="mode-sub">An educational plastic-waste quiz about Singapore's last landfill</p>
+    <div class="mode-lang-row">
+      <label for="langSelectMode">🌐</label>
+      <select id="langSelectMode" onchange="setLanguagePre(this.value)">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+        <option value="ms">Bahasa Melayu</option>
+        <option value="ta">தமிழ்</option>
+      </select>
+    </div>
+    <div class="mode-cards">
+      <button class="mode-card" onclick="startMode('solo')" aria-label="Play solo mode">
+        <div class="mode-card-icon">🧑</div>
+        <div class="mode-card-title">Solo Challenge</div>
+        <div class="mode-card-desc">One player. Answer all 20 questions. Score points for each correct answer and keep Pulau Semakau alive.</div>
+      </button>
+      <button class="mode-card" onclick="startMode('team')" aria-label="Play team challenge mode">
+        <div class="mode-card-icon">👥</div>
+        <div class="mode-card-title">Team Challenge</div>
+        <div class="mode-card-desc">3 teams take turns. Host awards points. Classic Jeopardy-style showdown with full scoreboard.</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MAIN GAME ========== -->
+<div class="wrap" id="wrap" style="display:none">
 
   <div class="hero-row">
     <div class="hero">
@@ -15,54 +49,71 @@
       <p id="gameSub">Guess which habit sends more plastic to Singapore's last landfill</p>
     </div>
     <div class="top-controls">
-      <select id="langSelect" onchange="setLanguage(this.value)">
+      <button class="icon-btn" id="helpBtn" onclick="toggleHelp()" aria-label="How to play" aria-expanded="false">❓</button>
+      <select id="langSelect" onchange="setLanguage(this.value)" aria-label="Select language">
         <option value="en">English</option>
         <option value="zh">中文</option>
         <option value="ms">Bahasa Melayu</option>
         <option value="ta">தமிழ்</option>
       </select>
-      <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+      <button class="icon-btn" id="soundToggle" onclick="toggleSound()" aria-label="Toggle sound">🔊</button>
     </div>
   </div>
 
-  <div class="mascot-bar">
-    <div class="mascot-face" id="mascotFace">🗑️</div>
-    <div class="mascot-speech" id="mascotIntro">Eh, welcome lah! I'm Bin Bin. I live at Semakau and I see EVERYTHING you throw away. Let's see who really knows their rubbish!</div>
+  <!-- HOW TO PLAY -->
+  <div class="help-panel" id="helpPanel" style="display:none" role="region" aria-label="How to play">
+    <div class="help-inner" id="helpInner"></div>
   </div>
 
+  <!-- MASCOT -->
+  <div class="mascot-bar">
+    <div class="mascot-face" id="mascotFace" aria-hidden="true">🗑️</div>
+    <div class="mascot-speech" id="mascotIntro">Eh, welcome lah! I am Bin Bin.</div>
+  </div>
+
+  <!-- ISLAND -->
   <div class="island-section">
     <div class="island-label" id="islandLabel">Pulau Semakau health</div>
-    <div class="island-stage" id="islandStage"></div>
-    <div class="damage-bar-track">
+    <div class="island-stage" id="islandStage" aria-hidden="true"></div>
+    <div class="damage-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="10" id="damageBar">
       <div class="damage-bar-fill" id="damageBarFill"></div>
     </div>
-    <div class="damage-text" id="damageText">0 of 10 strikes — island is healthy</div>
+    <div class="damage-text" id="damageText" aria-live="polite"></div>
   </div>
 
+  <!-- SCOREBOARD -->
   <div class="scoreboard" id="scoreboard"></div>
-  <div class="turn-indicator" id="turn-indicator"></div>
-  <div class="board" id="board"></div>
-  <div id="win-banner"></div>
+  <div class="turn-indicator" id="turn-indicator" aria-live="polite"></div>
+
+  <!-- BOARD -->
+  <div class="board" id="board" role="grid" aria-label="Question board"></div>
+
+  <div id="win-banner" aria-live="assertive"></div>
   <div id="statsScreen"></div>
 </div>
 
-<div class="overlay" id="overlay" style="display:none;">
+<!-- QUESTION MODAL -->
+<div class="overlay" id="overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modalQuestion">
   <div class="modal" id="modal"></div>
 </div>
 
-<div class="freeze-overlay" id="freezeOverlay" style="display:none;">
+<!-- FREEZE FRAME -->
+<div class="freeze-overlay" id="freezeOverlay" style="display:none" aria-hidden="true">
   <div class="freeze-text" id="freezeText"></div>
 </div>
 
-<div class="alarm-overlay" id="alarmOverlay" style="display:none;">
+<!-- ALARM -->
+<div class="alarm-overlay" id="alarmOverlay" style="display:none" aria-hidden="true">
   <div class="alarm-content" id="alarmContent"></div>
 </div>
 
-<div class="overlay" id="bonusOverlay" style="display:none;">
+<!-- BONUS ROUND -->
+<div class="overlay" id="bonusOverlay" style="display:none" role="dialog" aria-modal="true">
   <div class="modal bonus-modal" id="bonusModal"></div>
 </div>
 
-<div class="confetti-layer" id="confettiLayer"></div>
+<!-- CONFETTI -->
+<div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
 
 <script src="i18n.js"></script>
 <script src="script.js"></script>
