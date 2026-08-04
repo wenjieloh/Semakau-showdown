@@ -1,16 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Semakau Showdown — an interactive Jeopardy-style quiz game about plastic waste habits in Singapore, built around Pulau Semakau landfill." />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="Semakau Showdown — Jeopardy-style plastic waste quiz about Singapore's Pulau Semakau landfill."/>
 <title>Semakau Showdown</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>" />
-<link rel="stylesheet" href="style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at top,#0d2b3e 0%,#061826 60%,#04101c 100%);color:#fff;min-height:100vh;overflow-x:hidden}
+button{font-family:inherit}
+
+/* MODE SELECT */
+.mode-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.mode-box{background:linear-gradient(180deg,#122e42,#081b2a);border:2px solid #1d9e75;border-radius:20px;padding:2rem;width:100%;max-width:640px;text-align:center;animation:modalPop .5s cubic-bezier(.34,1.56,.64,1)}
+.mode-logo{font-size:52px;margin-bottom:.5rem;display:inline-block;animation:bob 2s ease-in-out infinite}
+.mode-title{font-size:clamp(22px,5vw,32px);font-weight:800;color:#ffd23f;text-transform:uppercase;text-shadow:0 0 10px rgba(255,210,63,.5);margin-bottom:6px}
+.mode-sub{font-size:13px;color:#9fd8c4;margin-bottom:1rem}
+.mode-lang-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:1.25rem}
+.mode-lang-row select{background:#0e2738;color:#fff;border:2px solid #2563eb33;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:480px){.mode-cards{grid-template-columns:1fr}}
+.mode-card{background:#0e2738;border:2px solid #2563eb33;border-radius:14px;padding:1.25rem;cursor:pointer;text-align:left;transition:all .2s;color:#fff}
+.mode-card:hover{border-color:#ffd23f;transform:translateY(-4px);box-shadow:0 8px 24px rgba(255,210,63,.2)}
+.mode-card:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.mode-card-icon{font-size:30px;margin-bottom:10px}
+.mode-card-title{font-size:15px;font-weight:800;color:#ffd23f;margin-bottom:6px}
+.mode-card-desc{font-size:12px;color:#9fd8c4;line-height:1.55}
+
+/* LAYOUT */
+.wrap{max-width:980px;margin:0 auto;padding:1.5rem}
+@media(max-width:768px){.wrap{padding:1rem}}
+
+/* HERO */
+.hero-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:1rem}
+.hero{text-align:center;flex:1;animation:dropIn .6s ease}
+.hero h1{font-size:clamp(20px,4vw,34px);font-weight:800;letter-spacing:1px;color:#ffd23f;text-shadow:0 0 10px rgba(255,210,63,.6),0 0 24px rgba(255,210,63,.3);text-transform:uppercase}
+.hero p{color:#9fd8c4;font-size:clamp(12px,2vw,14px);margin-top:6px}
+.top-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.icon-btn,.top-controls select{background:#0e2738;color:#fff;border:2px solid #2563eb33;border-radius:10px;padding:8px 12px;font-size:14px;cursor:pointer;transition:border-color .2s,transform .15s}
+.top-controls select{padding:8px 10px;font-size:13px}
+.icon-btn:hover,.top-controls select:hover{border-color:#ffd23f}
+.icon-btn:hover{transform:scale(1.1)}
+.icon-btn:focus,.top-controls select:focus{outline:3px solid #ffd23f;outline-offset:3px}
+
+/* HOW TO PLAY */
+.help-panel{background:#0e2738;border:2px solid #1d9e75;border-radius:14px;margin-bottom:1.25rem;animation:fadeSlideUp .3s ease}
+.help-inner{padding:1.25rem;font-size:13px;line-height:1.7;color:#d7f5e8}
+.help-inner h3{color:#ffd23f;font-size:15px;margin-bottom:10px}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.help-grid{grid-template-columns:1fr}}
+.help-section{background:#122e42;border-radius:10px;padding:10px 12px}
+.help-section strong{color:#4ade80;display:block;margin-bottom:4px}
+
+/* MASCOT */
+.mascot-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 1.25rem;flex-wrap:wrap}
+.mascot-face{font-size:40px;animation:bob 2s ease-in-out infinite}
+.mascot-face.react-happy{animation:happyBounce .5s ease}
+.mascot-face.react-sad{animation:sadShake .5s ease}
+.mascot-speech{background:#102a3a;border:2px solid #1d9e75;border-radius:16px;padding:10px 16px;font-size:13px;max-width:480px;color:#d7f5e8;position:relative;animation:fadeSlideIn .4s ease}
+.mascot-speech::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-right-color:#1d9e75}
+
+/* ISLAND */
+.island-section{text-align:center;margin-bottom:1.5rem}
+.island-label{font-size:13px;color:#9fd8c4;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.island-stage{width:280px;max-width:100%;height:180px;margin:0 auto;position:relative}
+.island-stage svg{width:100%;height:100%}
+.damage-bar-track{width:260px;max-width:100%;height:12px;background:#0a2538;border-radius:8px;margin:10px auto 6px;overflow:hidden;border:1px solid #1a2c3a}
+.damage-bar-fill{height:100%;background:linear-gradient(90deg,#4ade80,#facc15,#ef4444);width:0%;transition:width .5s ease}
+.damage-text{font-size:12px;color:#9fd8c4;transition:color .3s}
+.trash-particle{position:absolute;font-size:16px;opacity:0;pointer-events:none}
+@keyframes trashFall{0%{opacity:0;transform:translateY(-20px) rotate(0deg)}20%{opacity:1}100%{opacity:.9;transform:translateY(40px) rotate(180deg)}}
+.island-shake{animation:islandShake .4s}
+
+/* SCOREBOARD */
+.scoreboard{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.score-card{background:linear-gradient(180deg,#14344a,#0c2335);border:2px solid #1d4e63;border-radius:14px;padding:14px;text-align:center;transition:all .25s}
+.score-card.active{border-color:#ffd23f;box-shadow:0 0 18px rgba(255,210,63,.4);transform:translateY(-4px)}
+.team-name{font-size:clamp(10px,2vw,12px);color:#8fb8cc;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.team-score{font-size:clamp(22px,4vw,30px);font-weight:800;transition:transform .2s}
+.team-score.pop{animation:scorePop .4s ease}
+.team-badge{display:inline-block;font-size:clamp(9px,1.5vw,10px);padding:3px 10px;border-radius:20px;margin-top:6px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.solo-score-bar{background:linear-gradient(180deg,#14344a,#0c2335);border:2px solid #1d9e75;border-radius:14px;padding:16px;text-align:center;margin-bottom:1.5rem}
+.solo-score-label{font-size:12px;color:#8fb8cc;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.solo-score-value{font-size:36px;font-weight:800;color:#ffd23f}
+.solo-score-sub{font-size:12px;color:#9fd8c4;margin-top:4px}
+.turn-indicator{text-align:center;font-size:clamp(12px,2.5vw,14px);color:#ffd23f;margin-bottom:1.25rem;font-weight:600}
+
+/* BOARD */
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.5rem}
+@media(max-width:600px){.board{gap:5px}}
+.cat-header{background:linear-gradient(180deg,#1d9e75,#0f6e56);border-radius:10px;padding:12px 6px;text-align:center;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:2px solid #2bc492;animation:dropIn .5s ease}
+.cat-icon{font-size:clamp(16px,3vw,20px)}
+.cat-name{font-size:clamp(9px,1.5vw,11px);font-weight:700;color:#eafff5;line-height:1.25;text-transform:uppercase;letter-spacing:.3px}
+.cell{background:linear-gradient(180deg,#133a52,#0a2538);border:2px solid #2563eb33;border-radius:10px;text-align:center;cursor:pointer;font-size:clamp(16px,3vw,20px);font-weight:800;color:#ffd23f;min-height:clamp(44px,8vw,56px);display:flex;align-items:center;justify-content:center;transition:all .15s;animation:tilePop .35s ease backwards;-webkit-appearance:none;appearance:none}
+.cell:nth-child(4n+1){animation-delay:.02s}.cell:nth-child(4n+2){animation-delay:.06s}.cell:nth-child(4n+3){animation-delay:.10s}.cell:nth-child(4n+4){animation-delay:.14s}
+.cell:hover:not([disabled]){background:linear-gradient(180deg,#1c4d6c,#0f3047);border-color:#ffd23f;transform:scale(1.06);box-shadow:0 4px 12px rgba(255,210,63,.25)}
+.cell:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.cell:active:not([disabled]){transform:scale(.95)}
+.cell.used{background:#0a1722;color:#355068;border-color:#1a2c3a;cursor:default;font-size:22px;animation:usedFlip .5s ease}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(2,8,14,.8);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem;animation:overlayFade .25s ease}
+.modal{background:linear-gradient(180deg,#122e42,#081b2a);border-radius:18px;border:2px solid #1d9e75;width:100%;max-width:600px;padding:1.75rem;box-shadow:0 0 40px rgba(29,158,117,.25);animation:modalPop .35s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto}
+@media(max-width:480px){.modal{padding:1.25rem}}
+.modal-tag{font-size:11px;color:#6fb8d4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.modal-pts{font-size:15px;font-weight:800;color:#ffd23f;margin-bottom:14px}
+.modal-question{font-size:clamp(14px,2.5vw,17px);font-weight:700;color:#fff;line-height:1.5;margin-bottom:1.25rem}
+.timer-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.timer-track{flex:1;height:8px;background:#0a2538;border-radius:6px;overflow:hidden}
+.timer-fill{height:100%;background:#4ade80;border-radius:6px;transition:width 1s linear,background .4s}
+.timer-fill.warn{background:#facc15}
+.timer-fill.danger{background:#f87171}
+.timer-label{font-size:13px;font-weight:800;color:#ffd23f;min-width:36px;text-align:right}
+.timer-label.danger{color:#f87171;animation:pulse .4s infinite}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+@media(max-width:420px){.options{grid-template-columns:1fr}}
+.opt-btn{background:#0e2738;border:2px solid #2563eb33;border-radius:10px;padding:14px;text-align:left;font-size:clamp(12px,2vw,13px);color:#e8f4fa;cursor:pointer;line-height:1.4;font-weight:600;transition:all .15s;width:100%}
+.opt-btn:hover:not([disabled]){background:#15334a;border-color:#ffd23f;transform:translateY(-2px)}
+.opt-btn:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.opt-btn:active:not([disabled]){transform:scale(.97)}
+.opt-btn.correct{background:#163d24;border-color:#4ade80;color:#bbf7d0;animation:correctPulse .5s ease}
+.opt-btn.wrong{background:#3d1616;border-color:#f87171;color:#fecaca;animation:wrongShake .4s ease}
+.result-box{border-radius:12px;padding:14px;font-size:13px;line-height:1.6;margin-bottom:1rem;animation:fadeSlideUp .4s ease}
+.result-box.correct{background:#163d24;color:#bbf7d0;border:1px solid #4ade80}
+.result-box.wrong{background:#3d1616;color:#fecaca;border:1px solid #f87171}
+.result-box.trick{background:#3d3416;color:#fde68a;border:1px solid #facc15}
+.fact-tag{display:inline-block;font-size:10px;font-weight:700;color:#0a1722;background:#ffd23f;padding:2px 8px;border-radius:6px;margin-bottom:6px;text-transform:uppercase}
+.mascot-react{display:flex;align-items:center;gap:10px;margin-bottom:1rem;animation:fadeSlideUp .4s ease}
+.mascot-react .mface{font-size:28px}
+.mascot-react .mtext{font-size:12px;color:#9fd8c4;font-style:italic}
+.modal-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.team-select{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.team-btn{font-size:12px;padding:6px 12px;border-radius:8px;border:2px solid #2563eb33;background:#0e2738;color:#e8f4fa;cursor:pointer;font-weight:600;transition:all .15s}
+.team-btn:hover{transform:scale(1.05);border-color:#ffd23f}
+.team-btn:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.team-btn.selected{background:#ffd23f;border-color:#ffd23f;color:#0a1722}
+.close-btn{font-size:13px;padding:8px 16px;border-radius:10px;border:2px solid #2563eb33;background:transparent;color:#cdd;cursor:pointer;font-weight:600;transition:all .15s}
+.close-btn:hover{border-color:#f87171;color:#fecaca}
+.close-btn:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.award-btn{font-size:13px;padding:8px 18px;border-radius:10px;border:2px solid #1d9e75;background:#1d9e75;color:#04342c;cursor:pointer;font-weight:800;transition:all .15s}
+.award-btn:hover{transform:scale(1.05);box-shadow:0 0 14px rgba(29,158,117,.5)}
+.award-btn:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.win-banner{text-align:center;font-size:clamp(16px,3vw,22px);font-weight:800;padding:1.5rem;background:linear-gradient(180deg,#1d4e63,#0c2335);border-radius:16px;border:2px solid #ffd23f;color:#ffd23f;margin-top:1rem;text-shadow:0 0 12px rgba(255,210,63,.5);animation:modalPop .5s cubic-bezier(.34,1.56,.64,1)}
+.loss-banner{text-align:center;font-size:clamp(16px,3vw,22px);font-weight:800;padding:1.5rem;background:linear-gradient(180deg,#3d1616,#1a0808);border-radius:16px;border:2px solid #f87171;color:#f87171;margin-top:1rem;animation:modalPop .5s cubic-bezier(.34,1.56,.64,1)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
+.restart-btn{background:#1d9e75;color:#04342c;border:none;border-radius:10px;padding:12px 24px;font-weight:800;cursor:pointer;font-size:14px;transition:transform .15s}
+.restart-btn:hover{transform:scale(1.05)}
+.restart-btn:focus{outline:3px solid #ffd23f;outline-offset:3px}
+
+/* BONUS ROUND */
+.bonus-modal{background:repeating-linear-gradient(135deg,#2a2204,#2a2204 14px,#1a1502 14px,#1a1502 28px);border:3px solid #ffd23f;box-shadow:0 0 60px rgba(255,210,63,.5);animation:modalPop .4s cubic-bezier(.34,1.56,.64,1)}
+.bonus-header{text-align:center;margin-bottom:1rem}
+.bonus-title{font-size:clamp(14px,3vw,20px);font-weight:900;color:#ffd23f;text-transform:uppercase;letter-spacing:1px;animation:pulse .8s infinite}
+.bonus-warning{font-size:12px;color:#fde68a;margin-top:4px}
+.bonus-timer{font-size:clamp(36px,8vw,48px);font-weight:900;text-align:center;color:#ffd23f;margin:.5rem 0;text-shadow:0 0 20px rgba(255,210,63,.7);transition:color .3s}
+.bonus-timer.danger{color:#f87171;text-shadow:0 0 20px rgba(248,113,113,.8);animation:pulse .4s infinite}
+.bonus-opt-btn{background:#1a1502;border:2px solid #ffd23f55;border-radius:10px;padding:14px;text-align:left;font-size:13px;color:#fde68a;cursor:pointer;line-height:1.4;font-weight:600;width:100%;transition:all .15s;margin-bottom:8px}
+.bonus-opt-btn:hover:not([disabled]){background:#2a2204;border-color:#ffd23f;transform:translateY(-2px)}
+.bonus-opt-btn:focus{outline:3px solid #ffd23f;outline-offset:3px}
+.bonus-progress{display:flex;gap:6px;justify-content:center;margin:10px 0}
+.bonus-dot{width:10px;height:10px;border-radius:50%;background:#4a3a08;transition:all .3s}
+.bonus-dot.done{background:#4ade80}
+.bonus-dot.current{background:#ffd23f;animation:pulse .6s infinite}
+
+/* TRANSITIONS */
+.freeze-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center}
+.freeze-text{font-size:clamp(20px,5vw,28px);font-weight:900;color:#fff;text-align:center;text-transform:uppercase;animation:freezeZoom 1s ease;text-shadow:0 0 20px rgba(255,255,255,.4)}
+.alarm-overlay{position:fixed;inset:0;z-index:210;display:flex;align-items:center;justify-content:center;animation:alarmFlash .4s infinite alternate}
+.alarm-content{text-align:center}
+.alarm-title{font-size:clamp(18px,4vw,30px);font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;text-shadow:0 0 24px rgba(255,255,255,.6);animation:alarmPulse .5s infinite}
+.alarm-count{font-size:clamp(60px,15vw,90px);font-weight:900;color:#fff;margin-top:1rem;text-shadow:0 0 30px rgba(255,255,255,.8);animation:countPop 1s ease}
+
+/* STATS */
+.stats-screen{background:linear-gradient(180deg,#14344a,#0c2335);border:2px solid #ffd23f;border-radius:16px;padding:1.5rem;margin-top:1.5rem;animation:modalPop .5s ease}
+.stats-title{text-align:center;font-size:clamp(16px,3vw,22px);font-weight:800;color:#ffd23f;margin-bottom:1.25rem;text-transform:uppercase}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+@media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
+.stat-team-card{background:#0c2335;border:2px solid #1d4e63;border-radius:12px;padding:12px;text-align:center;transition:transform .2s}
+.stat-team-card:hover{transform:translateY(-3px)}
+.stat-team-card.winner{border-color:#ffd23f;box-shadow:0 0 16px rgba(255,210,63,.35)}
+.stat-team-name{font-size:13px;font-weight:700;margin-bottom:8px}
+.stat-row{display:flex;justify-content:space-between;font-size:11px;color:#9fd8c4;padding:3px 0}
+.stat-row span:last-child{color:#fff;font-weight:700}
+.overall-stats{background:#0c2335;border-radius:12px;padding:14px;font-size:13px;line-height:1.8}
+.overall-stats .row{display:flex;justify-content:space-between;border-bottom:1px solid #1a2c3a;padding:6px 0}
+.mvp-banner{text-align:center;background:#1d4e63;border-radius:10px;padding:10px;margin-bottom:1rem;font-size:13px;color:#ffd23f;font-weight:700}
+
+/* CONFETTI */
+.confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden}
+.confetti-piece{position:absolute;top:-20px;width:8px;height:14px;opacity:.9;border-radius:2px;animation:confettiFall linear forwards}
+
+/* KEYFRAMES */
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes happyBounce{0%{transform:scale(1)}30%{transform:scale(1.3) rotate(-8deg)}60%{transform:scale(1.15) rotate(8deg)}100%{transform:scale(1)}}
+@keyframes sadShake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-5deg)}75%{transform:translateX(6px) rotate(5deg)}}
+@keyframes dropIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tilePop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes usedFlip{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+@keyframes overlayFade{from{opacity:0}to{opacity:1}}
+@keyframes modalPop{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes scorePop{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+@keyframes correctPulse{0%{transform:scale(1)}50%{transform:scale(1.04);box-shadow:0 0 16px rgba(74,222,128,.5)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes islandShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px) rotate(-1deg)}40%{transform:translateX(5px) rotate(1deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes freezeZoom{0%{transform:scale(1.3);opacity:0}30%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes alarmFlash{from{background:rgba(180,20,20,.6)}to{background:rgba(255,210,63,.5)}}
+@keyframes alarmPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes countPop{0%{transform:scale(2);opacity:0}50%{transform:scale(1);opacity:1}100%{transform:scale(.8);opacity:0}}
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
 
-<!-- ========== MODE SELECT ========== -->
+<!-- MODE SELECT -->
 <div id="modeScreen" class="mode-screen">
   <div class="mode-box">
     <div class="mode-logo">♻️</div>
@@ -18,7 +225,7 @@
     <p class="mode-sub">An educational plastic-waste quiz about Singapore's last landfill</p>
     <div class="mode-lang-row">
       <label for="langSelectMode">🌐</label>
-      <select id="langSelectMode" onchange="setLanguagePre(this.value)">
+      <select id="langSelectMode">
         <option value="en">English</option>
         <option value="zh">中文</option>
         <option value="ms">Bahasa Melayu</option>
@@ -26,52 +233,45 @@
       </select>
     </div>
     <div class="mode-cards">
-      <button class="mode-card" onclick="startMode('solo')" aria-label="Play solo mode">
+      <button class="mode-card" id="btnSolo">
         <div class="mode-card-icon">🧑</div>
         <div class="mode-card-title">Solo Challenge</div>
-        <div class="mode-card-desc">One player. Answer all 20 questions. Score points for each correct answer and keep Pulau Semakau alive.</div>
+        <div class="mode-card-desc">One player. Answer all 20 questions. Keep Pulau Semakau alive.</div>
       </button>
-      <button class="mode-card" onclick="startMode('team')" aria-label="Play team challenge mode">
+      <button class="mode-card" id="btnTeam">
         <div class="mode-card-icon">👥</div>
         <div class="mode-card-title">Team Challenge</div>
-        <div class="mode-card-desc">3 teams take turns. Host awards points. Classic Jeopardy-style showdown with full scoreboard.</div>
+        <div class="mode-card-desc">3 teams take turns. Host awards points. Classic Jeopardy-style showdown.</div>
       </button>
     </div>
   </div>
 </div>
 
-<!-- ========== MAIN GAME ========== -->
+<!-- MAIN GAME -->
 <div class="wrap" id="wrap" style="display:none">
-
   <div class="hero-row">
     <div class="hero">
       <h1 id="gameTitle">Semakau Showdown</h1>
       <p id="gameSub">Guess which habit sends more plastic to Singapore's last landfill</p>
     </div>
     <div class="top-controls">
-      <button class="icon-btn" id="helpBtn" onclick="toggleHelp()" aria-label="How to play" aria-expanded="false">❓</button>
-      <select id="langSelect" onchange="setLanguage(this.value)" aria-label="Select language">
+      <button class="icon-btn" id="helpBtn" aria-label="How to play" aria-expanded="false">❓</button>
+      <select id="langSelect" aria-label="Select language">
         <option value="en">English</option>
         <option value="zh">中文</option>
         <option value="ms">Bahasa Melayu</option>
         <option value="ta">தமிழ்</option>
       </select>
-      <button class="icon-btn" id="soundToggle" onclick="toggleSound()" aria-label="Toggle sound">🔊</button>
+      <button class="icon-btn" id="soundToggle" aria-label="Toggle sound">🔊</button>
     </div>
   </div>
-
-  <!-- HOW TO PLAY -->
-  <div class="help-panel" id="helpPanel" style="display:none" role="region" aria-label="How to play">
+  <div class="help-panel" id="helpPanel" style="display:none">
     <div class="help-inner" id="helpInner"></div>
   </div>
-
-  <!-- MASCOT -->
   <div class="mascot-bar">
     <div class="mascot-face" id="mascotFace" aria-hidden="true">🗑️</div>
-    <div class="mascot-speech" id="mascotIntro">Eh, welcome lah! I am Bin Bin.</div>
+    <div class="mascot-speech" id="mascotSpeech"></div>
   </div>
-
-  <!-- ISLAND -->
   <div class="island-section">
     <div class="island-label" id="islandLabel">Pulau Semakau health</div>
     <div class="island-stage" id="islandStage" aria-hidden="true"></div>
@@ -80,24 +280,19 @@
     </div>
     <div class="damage-text" id="damageText" aria-live="polite"></div>
   </div>
-
-  <!-- SCOREBOARD -->
   <div class="scoreboard" id="scoreboard"></div>
-  <div class="turn-indicator" id="turn-indicator" aria-live="polite"></div>
-
-  <!-- BOARD -->
-  <div class="board" id="board" role="grid" aria-label="Question board"></div>
-
-  <div id="win-banner" aria-live="assertive"></div>
+  <div class="turn-indicator" id="turnIndicator" aria-live="polite"></div>
+  <div class="board" id="board" role="grid"></div>
+  <div id="winBanner" aria-live="assertive"></div>
   <div id="statsScreen"></div>
 </div>
 
 <!-- QUESTION MODAL -->
-<div class="overlay" id="overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modalQuestion">
+<div class="overlay" id="overlay" style="display:none" role="dialog" aria-modal="true">
   <div class="modal" id="modal"></div>
 </div>
 
-<!-- FREEZE FRAME -->
+<!-- FREEZE -->
 <div class="freeze-overlay" id="freezeOverlay" style="display:none" aria-hidden="true">
   <div class="freeze-text" id="freezeText"></div>
 </div>
@@ -107,15 +302,701 @@
   <div class="alarm-content" id="alarmContent"></div>
 </div>
 
-<!-- BONUS ROUND -->
+<!-- BONUS -->
 <div class="overlay" id="bonusOverlay" style="display:none" role="dialog" aria-modal="true">
   <div class="modal bonus-modal" id="bonusModal"></div>
 </div>
 
-<!-- CONFETTI -->
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
 
-<script src="i18n.js"></script>
-<script src="script.js"></script>
+<script>
+/* ============================================================
+   ALL TRANSLATIONS — inline so there are zero load-order issues
+============================================================ */
+const I18N = {
+  en:{
+    title:"Semakau Showdown",
+    subtitle:"Guess which habit sends more plastic to Singapore's last landfill",
+    islandLabel:"Pulau Semakau health",
+    mascotIntro:"Eh, welcome lah! I'm Bin Bin. I live at Semakau and I see EVERYTHING you throw away. Let's see who really knows their rubbish!",
+    onTheClock:"On the clock",waiting:"Waiting",pickPrompt:"pick a category and point value!",
+    points:"points",correct:"Correct!",notQuite:"Not quite!",trickQuestion:"Trick question!",
+    realFact:"Real fact",awardTo:"Award points to:",skip:"Skip points",award:"Award",pts:"pts",cancel:"Cancel",
+    gameOver:"GAME OVER!",winsWith:"wins with",winsWithPlural:"win with",
+    finalLine:"Now go home and use less plastic ah!",viewStats:"View full stats",
+    statsTitle:"Final showdown stats",mvp:"MVP team",teamAccuracy:"Accuracy",
+    teamCorrect:"Correct",teamWrong:"Wrong",teamSkipped:"Skipped",
+    totalQuestions:"Total questions",totalCorrect:"Total correct",totalWrong:"Total wrong",totalSkipped:"Total skipped",
+    islandStatus:"Island final status",saved:"Saved",lost:"Lost (bonus round triggered)",
+    costliest:"Costliest wrong answer",restart:"Play again",
+    damageHealthy:"island is healthy",damageDamaged:"island is getting damaged",damageCritical:"island is critical!",
+    strikes:"strikes",bonusTitle:"EMERGENCY! SAVE PULAU SEMAKAU",
+    bonusWarning:"One wrong answer and the island is lost forever. No second chances.",
+    bonusTimeUp:"TIME'S UP!",bonusFail:"Pulau Semakau has been lost.",
+    bonusSuccess:"PULAU SEMAKAU IS SAVED!",bonusSuccessSub:"Quick thinking saved the island just in time.",
+    freezeText:"WAIT...",alarmTitle:"ISLAND CRITICAL",seconds:"sec"
+  },
+  zh:{
+    title:"三马高决战",subtitle:"猜猜哪种习惯会给新加坡最后的垃圾填埋场带来更多塑料垃圾",
+    islandLabel:"实马高岛健康状况",mascotIntro:"嘿，欢迎！我是宾宾。我住在实马高，你丢掉的每一件东西我都看得见。来看看谁最了解垃圾分类！",
+    onTheClock:"轮到你了",waiting:"等待中",pickPrompt:"请选择一个类别和分数！",
+    points:"分",correct:"回答正确！",notQuite:"不太对！",trickQuestion:"这是一个陷阱题！",
+    realFact:"真实数据",awardTo:"将分数授予：",skip:"跳过加分",award:"授予",pts:"分",cancel:"取消",
+    gameOver:"游戏结束！",winsWith:"获胜，得分",winsWithPlural:"获胜，得分",
+    finalLine:"现在回家少用塑料吧！",viewStats:"查看完整统计",
+    statsTitle:"最终对决统计",mvp:"最佳团队",teamAccuracy:"准确率",
+    teamCorrect:"正确",teamWrong:"错误",teamSkipped:"跳过",
+    totalQuestions:"总题数",totalCorrect:"总正确数",totalWrong:"总错误数",totalSkipped:"总跳过数",
+    islandStatus:"岛屿最终状态",saved:"已拯救",lost:"已失去（触发了加时赛）",
+    costliest:"代价最大的错误答案",restart:"再玩一次",
+    damageHealthy:"岛屿状况良好",damageDamaged:"岛屿正在受损",damageCritical:"岛屿状况危急！",
+    strikes:"次失误",bonusTitle:"紧急情况！拯救实马高岛",
+    bonusWarning:"答错一题，岛屿将永远消失。没有第二次机会。",
+    bonusTimeUp:"时间到！",bonusFail:"实马高岛已经失去。",
+    bonusSuccess:"实马高岛得救了！",bonusSuccessSub:"快速的反应及时拯救了这座岛屿。",
+    freezeText:"等等...",alarmTitle:"岛屿危急",seconds:"秒"
+  },
+  ms:{
+    title:"Pertarungan Semakau",subtitle:"Teka tabiat mana yang menghasilkan lebih banyak sisa plastik ke tapak pelupusan terakhir Singapura",
+    islandLabel:"Kesihatan Pulau Semakau",mascotIntro:"Eh, selamat datang lah! Saya Bin Bin. Saya tinggal di Semakau dan saya nampak SEMUA benda yang anda buang. Jom lihat siapa yang betul-betul faham tentang sampah!",
+    onTheClock:"Giliran anda",waiting:"Menunggu",pickPrompt:"pilih kategori dan nilai mata!",
+    points:"mata",correct:"Betul!",notQuite:"Tidak tepat!",trickQuestion:"Soalan jerat!",
+    realFact:"Fakta sebenar",awardTo:"Berikan mata kepada:",skip:"Langkau mata",award:"Berikan",pts:"mata",cancel:"Batal",
+    gameOver:"TAMAT PERMAINAN!",winsWith:"menang dengan",winsWithPlural:"menang dengan",
+    finalLine:"Sekarang balik rumah dan kurangkan penggunaan plastik ya!",viewStats:"Lihat statistik penuh",
+    statsTitle:"Statistik pertarungan akhir",mvp:"Pasukan MVP",teamAccuracy:"Ketepatan",
+    teamCorrect:"Betul",teamWrong:"Salah",teamSkipped:"Dilangkau",
+    totalQuestions:"Jumlah soalan",totalCorrect:"Jumlah betul",totalWrong:"Jumlah salah",totalSkipped:"Jumlah dilangkau",
+    islandStatus:"Status akhir pulau",saved:"Diselamatkan",lost:"Hilang (pusingan bonus tercetus)",
+    costliest:"Jawapan salah paling mahal",restart:"Main semula",
+    damageHealthy:"pulau sihat",damageDamaged:"pulau semakin rosak",damageCritical:"pulau dalam keadaan kritikal!",
+    strikes:"kesilapan",bonusTitle:"KECEMASAN! SELAMATKAN PULAU SEMAKAU",
+    bonusWarning:"Satu jawapan salah dan pulau ini hilang selama-lamanya. Tiada peluang kedua.",
+    bonusTimeUp:"MASA TAMAT!",bonusFail:"Pulau Semakau telah hilang.",
+    bonusSuccess:"PULAU SEMAKAU TERSELAMAT!",bonusSuccessSub:"Tindakan pantas berjaya menyelamatkan pulau ini tepat pada masanya.",
+    freezeText:"TUNGGU...",alarmTitle:"PULAU KRITIKAL",seconds:"saat"
+  },
+  ta:{
+    title:"சேமக்கௌ சவால்",subtitle:"சிங்கப்பூரின் கடைசி கழிவு நிலத்திற்கு அதிக பிளாஸ்டிக் கழிவுகளை அனுப்பும் பழக்கம் எது என்று யூகிக்கவும்",
+    islandLabel:"புலாவ் சேமக்கௌ ஆரோக்கியம்",mascotIntro:"ஏய், வரவேற்கிறேன்! நான் பின் பின். நான் சேமக்கௌவில் வசிக்கிறேன், நீங்கள் தூக்கி எறியும் ஒவ்வொன்றையும் நான் பார்க்கிறேன்.",
+    onTheClock:"உங்கள் முறை",waiting:"காத்திருக்கிறது",pickPrompt:"ஒரு பிரிவையும் புள்ளி மதிப்பையும் தேர்ந்தெடுக்கவும்!",
+    points:"புள்ளிகள்",correct:"சரியானது!",notQuite:"சரியில்லை!",trickQuestion:"தந்திர கேள்வி!",
+    realFact:"உண்மையான தகவல்",awardTo:"புள்ளிகளை வழங்கவும்:",skip:"புள்ளிகளை தவிர்க்கவும்",award:"வழங்கு",pts:"புள்ளிகள்",cancel:"ரத்து செய்",
+    gameOver:"விளையாட்டு முடிந்தது!",winsWith:"வென்றது",winsWithPlural:"வென்றனர்",
+    finalLine:"இப்போது வீட்டிற்குச் சென்று குறைவான பிளாஸ்டிக்கைப் பயன்படுத்துங்கள்!",viewStats:"முழு புள்ளிவிவரங்களைப் பார்க்கவும்",
+    statsTitle:"இறுதி சவால் புள்ளிவிவரங்கள்",mvp:"சிறந்த குழு",teamAccuracy:"துல்லியம்",
+    teamCorrect:"சரியானவை",teamWrong:"தவறானவை",teamSkipped:"தவிர்க்கப்பட்டவை",
+    totalQuestions:"மொத்த கேள்விகள்",totalCorrect:"மொத்த சரியானவை",totalWrong:"மொத்த தவறானவை",totalSkipped:"மொத்த தவிர்க்கப்பட்டவை",
+    islandStatus:"தீவின் இறுதி நிலை",saved:"காப்பாற்றப்பட்டது",lost:"இழந்தது (போனஸ் சுற்று தொடங்கப்பட்டது)",
+    costliest:"மிக விலையுயர்ந்த தவறான பதில்",restart:"மீண்டும் விளையாடு",
+    damageHealthy:"தீவு ஆரோக்கியமாக உள்ளது",damageDamaged:"தீவு சேதமடைந்து வருகிறது",damageCritical:"தீவு ஆபத்தான நிலையில் உள்ளது!",
+    strikes:"தவறுகள்",bonusTitle:"அவசரநிலை! புலாவ் சேமக்கௌவைக் காப்பாற்றுங்கள்",
+    bonusWarning:"ஒரு தவறான பதில் தீவை நிரந்தரமாக இழக்கச் செய்யும். இரண்டாவது வாய்ப்பு இல்லை.",
+    bonusTimeUp:"நேரம் முடிந்தது!",bonusFail:"புலாவ் சேமக்கௌ இழக்கப்பட்டது.",
+    bonusSuccess:"புலாவ் சேமக்கௌ காப்பாற்றப்பட்டது!",bonusSuccessSub:"விரைவான சிந்தனை சரியான நேரத்தில் தீவைக் காப்பாற்றியது.",
+    freezeText:"காத்திருங்கள்...",alarmTitle:"தீவு ஆபத்தான நிலையில்",seconds:"வினாடி"
+  }
+};
+
+const CATEGORIES = {
+  en:[{name:"Hawker Centre Da Bao",icon:"🥡"},{name:"Supermarket Shopping",icon:"🛒"},{name:"Online Shopping & Delivery",icon:"📦"},{name:"Everyday Lifestyle",icon:"🌏"}],
+  zh:[{name:"小贩中心打包",icon:"🥡"},{name:"超市购物",icon:"🛒"},{name:"网购与配送",icon:"📦"},{name:"日常生活习惯",icon:"🌏"}],
+  ms:[{name:"Bungkusan Pusat Penjaja",icon:"🥡"},{name:"Beli-belah Pasar Raya",icon:"🛒"},{name:"Beli-belah Dalam Talian",icon:"📦"},{name:"Tabiat Harian",icon:"🌏"}],
+  ta:[{name:"ஹாக்கர் சென்டர் பாக்கெட்",icon:"🥡"},{name:"சூப்பர்மார்க்கெட் ஷாப்பிங்",icon:"🛒"},{name:"ஆன்லைன் ஷாப்பிங்",icon:"📦"},{name:"அன்றாட பழக்கங்கள்",icon:"🌏"}]
+};
+
+/* Full question data — all 4 languages, each question has explicit correct: index */
+const QUESTIONS = {
+en:[
+  [
+    {q:"Buying takeaway food in a plastic container vs eating dine-in on reusable plates — which generates more plastic waste?",opts:["Plastic takeaway container","Dine-in on reusable plates"],correct:0,fact:"Singapore generated 868,000 tonnes of plastic waste in a single year — but only 4% of it gets recycled. Takeaway containers are food-contaminated, so almost all of it heads straight to Semakau.",mascot:"Wah, every da bao box is one-way ticket to my house lor!"},
+    {q:"Grabbing a plastic carrier bag for your da bao vs carrying the container by hand — which uses more single-use plastic?",opts:["Plastic carrier bag","Carry by hand"],correct:0,fact:"Plastic bags are designed for one trip home and then they're rubbish. Skipping the bag is the easiest plastic save of your whole day.",mascot:"One extra bag, one extra thing for me to swallow!"},
+    {q:"Accepting a bundle of plastic cutlery (spoon, fork, chopsticks) vs using your own reusable set — which generates more non-recyclable plastic?",opts:["Plastic cutlery bundle","Reusable set"],correct:0,fact:"A cutlery bundle is actually 3 separate plastic items in one wrapper. None of it survives contact with food, so none can be recycled.",mascot:"3 in 1 package, but all 3 end up with me!"},
+    {q:"Iced drink in a plastic cup with straw vs hot drink in a ceramic cup — which generates more single-use plastic?",opts:["Plastic cup and straw","Ceramic cup"],correct:0,fact:"Cup, lid, straw — that's three pieces of single-use plastic for one drink. A ceramic cup at the hawker centre generates zero.",mascot:"Three pieces of plastic for ONE drink, you serious?"},
+    {q:"Packing chicken rice in a traditional brown paper packet (lined with plastic film) vs a thick clear plastic bento box — which sends more plastic by weight to Semakau?",opts:["Brown paper packet","Thick plastic bento box"],correct:1,fact:"Trick! The paper packet has a thin plastic lining too, but the rigid bento box has far more plastic mass overall. Weight matters at landfill scale.",mascot:"Both got plastic lah, but the box is the heavyweight champion of rubbish."}
+  ],
+  [
+    {q:"Paying 5 cents for a plastic bag at FairPrice vs bringing your own reusable canvas bag — which wastes more single-use plastic?",opts:["Plastic bag from FairPrice","Reusable canvas bag"],correct:0,fact:"Singapore's recycling rate for plastics sits at just 6%. Every plastic bag is basically guaranteed landfill material.",mascot:"5 cents to feed me a bag? Cheap for you, expensive for the planet."},
+    {q:"Buying apples pre-packed in a plastic bag with a styrofoam tray vs picking loose apples into your basket — which has a higher plastic packaging footprint?",opts:["Pre-packed apples","Loose apples"],correct:0,fact:"Pre-packed fruit stacks a plastic bag AND a styrofoam tray on top of food that didn't need either. Two waste streams for the price of one apple.",mascot:"Apple don't need a costume, sia."},
+    {q:"Buying liquid hand soap in a new plastic pump bottle vs a refill pouch — which generates more rigid plastic waste?",opts:["New pump bottle","Refill pouch"],correct:0,fact:"Rigid pump bottles use far more plastic by weight than thin refill pouches. Reusing the bottle and just refilling cuts your plastic footprint dramatically.",mascot:"Keep the bottle, just top it up — your bottle don't need to retire every month!"},
+    {q:"Buying individual small snack packs inside a giant bag vs one large economy-sized pack — which produces more non-recyclable plastic wrappers?",opts:["Individual small snack packs","One large economy pack"],correct:0,fact:"Each tiny snack pack is its own non-recyclable wrapper. Twenty mini packs means twenty pieces of plastic film instead of just one.",mascot:"20 wrappers for one craving? I'm drowning in confetti here."},
+    {q:"Buying individually cling-wrapped cucumbers vs unwrapped local cucumbers — which generates more low-density polyethylene film that clogs recycling machines?",opts:["Cling-wrapped cucumbers","Unwrapped cucumbers"],correct:0,fact:"Cling film (LDPE) is one of the worst materials for recycling facilities. It jams machines and contaminates entire batches, so it gets rejected outright and sent to Semakau.",mascot:"Cucumber got skin already, why wrap again?!"}
+  ],
+  [
+    {q:"Ordering bubble tea via Foodpanda with the 'opt-out of cutlery' toggle turned OFF vs turned ON — which generates more immediate plastic waste?",opts:["Opt-out toggle OFF","Opt-out toggle ON"],correct:0,fact:"Leaving that toggle off auto-adds a straw and utensils you probably don't even need. One tap in the app saves real plastic, every single order.",mascot:"One small toggle, one less straw in my belly. Easy win!"},
+    {q:"Ordering a small item online with polymailer and bubble wrap vs buying it from a physical retail store — which generates more shipping plastic waste?",opts:["Online order with packaging","Buy from physical store"],correct:0,fact:"Online orders stack polymailers, bubble wrap, and tape — layers of plastic that a shelf purchase skips entirely.",mascot:"So much bubble wrap just for one phone case, walao."},
+    {q:"Ordering groceries online packed in multiple red plastic carrier bags vs visiting the supermarket with a trolley — which accumulates more single-use bags?",opts:["Online grocery delivery","Supermarket with trolley"],correct:0,fact:"Online grocery runs often arrive split across several single-use bags by default. A trolley at the store uses zero bags until you choose to.",mascot:"Why I get 6 bags for 6 items leh? Combine can already!"},
+    {q:"Standard e-commerce shipping (items packed individually with plastic air pillows) vs consolidated shipping (all in one box) — which generates more packaging waste?",opts:["Standard individual shipping","Consolidated shipping"],correct:0,fact:"Splitting one order into separate shipments multiplies the air pillows, tape, and boxes. Consolidating saves packaging and fewer delivery trips too.",mascot:"3 boxes for 3 items that could've shared ONE box. I see you."},
+    {q:"Ordering daily food delivery in disposable containers for a week vs cooking at home — which generates more contaminated non-recyclable plastic?",opts:["Daily food delivery","Cooking at home"],correct:0,fact:"Seven days of delivery means seven-plus containers, lids, bags, and cutlery packs — all food-contaminated and impossible to recycle.",mascot:"A week of delivery and my house is FULL, can you imagine?"}
+  ],
+  [
+    {q:"Drinking imported bottled mineral water every day vs drinking from a reusable flask — which generates more PET bottle waste?",opts:["Bottled mineral water","Reusable flask"],correct:0,fact:"One bottle a day adds up to over 300 PET bottles a year, per person. Singapore's tap water is safe to drink, so a flask skips that entirely.",mascot:"365 bottles a year just for water that comes free from your tap!"},
+    {q:"Using disposable plastic wet wipes to clean your hands vs washing with soap and water — which generates more plastic microfibre waste?",opts:["Disposable wet wipes","Soap and water"],correct:0,fact:"Most wet wipes are woven from plastic fibres like polyester, so they don't biodegrade. They're effectively plastic waste disguised as tissue.",mascot:"Wipes look soft but they're sneaky plastic in disguise!"},
+    {q:"Buying single-use plastic rain ponchos during a sudden downpour vs carrying a compact reusable umbrella — which generates more bulk plastic waste?",opts:["Disposable rain poncho","Reusable umbrella"],correct:0,fact:"A poncho is thick single-use plastic film that's worn once and binned. An umbrella does the same job for years.",mascot:"One rainy day, one poncho, one trip to my landfill. Every time."},
+    {q:"Using a plastic trash bag vs a biodegradable cornstarch bag for your home waste bin — which sends more plastic to Semakau?",opts:["Plastic trash bag","Biodegradable cornstarch bag"],correct:2,isTrick:true,fact:"Trick question! Singapore incinerates basically all household trash before it ever reaches me. Incineration cuts the volume by up to 90%, but the leftover ash from BOTH bag types still ends up at Semakau. Neither bag wins this one.",mascot:"Plastic bag or corn bag, both end up as ash in my backyard either way!"},
+    {q:"Throwing unwashed, oily plastic containers into the blue recycling bin vs washing them first — which ultimately sends more plastic to Semakau?",opts:["Unwashed oily containers","Washed containers"],correct:0,fact:"One greasy container can contaminate an entire recycling bin, causing everything in it to get rejected and redirected straight to me. A 30-second rinse can save a whole bin's worth of recyclables.",mascot:"One oily box ruins everybody's good recycling. Wash first, please!"}
+  ]
+],
+zh:[
+  [
+    {q:"用塑料容器打包外带食物，还是堂食使用可重复使用的餐具——哪一种会产生更多塑料垃圾？",opts:["塑料外带容器","堂食使用可重复餐具"],correct:0,fact:"新加坡一年产生了86.8万吨塑料垃圾，但只有4%被回收。外带容器沾染了食物残渣，几乎全部直接送往实马高。",mascot:"哇，每一个打包盒都是单程票，直送我家！"},
+    {q:"为打包食物多拿一个塑料袋，还是直接用手拿容器——哪一种使用更多一次性塑料？",opts:["塑料手提袋","直接用手拿"],correct:0,fact:"塑料袋设计只为一次使用，用完就成了垃圾。不拿袋子是你一天中最简单的减塑方式。",mascot:"多一个袋子，就是多一份要我消化的垃圾！"},
+    {q:"接受一套塑料餐具（勺子、叉子、筷子），还是使用自己的可重复使用餐具——哪一种产生更多不可回收塑料？",opts:["塑料餐具套装","可重复使用餐具"],correct:0,fact:"一套餐具其实是包在一个袋子里的三件独立塑料制品。沾上食物后都无法回收。",mascot:"三件套，结果全部都进了我的肚子！"},
+    {q:"用带塑料吸管的塑料杯装冰饮，还是用陶瓷杯装热饮——哪一种产生更多一次性塑料？",opts:["塑料杯和吸管","陶瓷杯"],correct:0,fact:"杯子、杯盖、吸管——一杯饮料就用了三件一次性塑料制品。小贩中心的陶瓷杯则完全不产生塑料垃圾。",mascot:"一杯饮料用三件塑料，你认真的吗？"},
+    {q:"用传统牛皮纸袋（内衬塑料薄膜）包装鸡饭，还是用厚实的透明塑料便当盒——哪一种按重量计算送往实马高的塑料更多？",opts:["牛皮纸袋","厚塑料便当盒"],correct:1,fact:"陷阱题！纸袋其实也有一层薄塑料内衬，但坚硬的便当盒整体塑料质量要大得多。在垃圾填埋场，重量才是关键。",mascot:"两个都有塑料啦，但便当盒才是垃圾界的重量级冠军。"}
+  ],
+  [
+    {q:"在职总超市付5分钱买一个塑料袋，还是自带可重复使用的帆布袋——哪一种浪费更多一次性塑料？",opts:["职总超市的塑料袋","可重复使用帆布袋"],correct:0,fact:"新加坡的塑料回收率只有6%。几乎每一个塑料袋都注定成为垃圾填埋场的材料。",mascot:"5分钱就能喂我一个袋子？对你便宜，对地球可贵了。"},
+    {q:"买已用塑料袋和泡沫托盘预先包装好的苹果，还是挑选散装苹果直接放入购物篮——哪一种塑料包装足迹更高？",opts:["预先包装的苹果","散装苹果"],correct:0,fact:"预先包装的水果在本来不需要任何包装的食物上叠加了塑料袋和泡沫托盘。一个苹果的代价是两种垃圾。",mascot:"苹果根本不需要穿衣服，干嘛还要包装啊。"},
+    {q:"买全新塑料泵头瓶装的洗手液，还是买补充装——哪一种产生更多硬质塑料垃圾？",opts:["全新泵头瓶","补充装"],correct:0,fact:"硬质泵头瓶按重量计算所用的塑料远多于薄薄的补充装袋子。重复使用瓶子并补充，能大幅减少你的塑料足迹。",mascot:"留着瓶子，补充就好——你的瓶子不需要每个月都退休！"},
+    {q:"买装在大塑料袋里的多个小零食包，还是买一大包经济装——哪一种产生更多不可回收塑料包装？",opts:["独立小零食包","一大包经济装"],correct:0,fact:"每一个小零食包都是一个独立的不可回收包装。二十个小包就是二十片塑料薄膜，而不是只有一片。",mascot:"为了一时的嘴瘾用了20个包装？我都快被五彩纸屑淹没了。"},
+    {q:"买用保鲜膜单独包裹的黄瓜，还是买没有包装的本地黄瓜——哪一种产生更多堵塞回收机器的低密度聚乙烯薄膜？",opts:["保鲜膜包裹的黄瓜","无包装黄瓜"],correct:0,fact:"保鲜膜（低密度聚乙烯）是回收设施最头疼的材料之一。它会卡住机器并污染整批回收物，因此会被直接拒收并送往实马高。",mascot:"黄瓜本来就有皮了，干嘛还要再包一层？！"}
+  ],
+  [
+    {q:"通过Foodpanda订购珍珠奶茶时，把「取消餐具」选项关闭，还是打开——哪一种会立刻产生更多塑料垃圾？",opts:["取消餐具选项关闭","取消餐具选项打开"],correct:0,fact:"不打开这个选项，系统会自动附上你可能根本不需要的吸管和餐具。在应用里轻轻一点，每一单都能真正减少塑料垃圾。",mascot:"一个小小的开关，少一根吸管进我肚子。轻松获胜！"},
+    {q:"网购一件小物品，用气泡信封和气泡膜包装送达，还是直接到实体店购买——哪一种产生更多运输塑料垃圾？",opts:["带包装的网购订单","到实体店购买"],correct:0,fact:"网购订单层层叠加气泡信封、气泡膜和胶带——这些塑料层在货架购物中完全不存在。",mascot:"为了一个手机壳用了这么多气泡膜，哇佬。"},
+    {q:"网购杂货时被分装进多个红色塑料手提袋送达，还是推着购物车到超市购物——哪一种累积更多一次性塑料袋？",opts:["网购杂货配送","推购物车到超市"],correct:0,fact:"网购杂货通常默认被分装进好几个一次性塑料袋送达。在超市用购物车则完全不用袋子，除非你自己选择要。",mascot:"为什么6样东西要用6个袋子呢？明明可以合并装啊！"},
+    {q:"标准电商配送（每件商品单独用塑料气垫包装），还是合并配送（全部装在一个箱子里）——哪一种产生更多包装垃圾？",opts:["标准单独配送","合并配送"],correct:0,fact:"把一笔订单拆成多次配送，会让气垫、胶带和箱子的用量成倍增加。合并配送既省包装，也减少配送次数。",mascot:"3样东西本来可以共用一个箱子，结果用了3个箱子。我看到了。"},
+    {q:"连续一周每天叫外卖并使用一次性容器，还是在家做饭——哪一种产生更多受污染的不可回收塑料？",opts:["每天叫外卖一周","在家做饭"],correct:0,fact:"一周外卖意味着七个以上的容器、盖子、袋子和餐具包——全部都沾了食物，无法回收。",mascot:"叫了一周外卖，我家都满了，你能想象吗？"}
+  ],
+  [
+    {q:"每天喝进口瓶装矿泉水，还是用可重复使用的水壶喝水——哪一种产生更多PET瓶垃圾？",opts:["瓶装矿泉水","可重复使用水壶"],correct:0,fact:"每人每天一瓶，一年下来超过300个PET瓶。新加坡的自来水可以安全饮用，用水壶完全可以避免这种垃圾。",mascot:"一年喝掉365个瓶子，其实自来水是免费的！"},
+    {q:"用一次性塑料湿巾清洁双手，还是用肥皂和水洗手——哪一种产生更多塑料微纤维垃圾？",opts:["一次性湿巾","肥皂和水"],correct:0,fact:"大多数湿巾是用聚酯等塑料纤维编织而成，无法生物降解。它们实际上是伪装成纸巾的塑料垃圾。",mascot:"湿巾看起来软软的，其实是伪装的塑料！"},
+    {q:"突然下大雨时买一次性塑料雨衣，还是携带一把小巧的可重复使用雨伞——哪一种产生更多大件塑料垃圾？",opts:["一次性雨衣","可重复使用雨伞"],correct:0,fact:"雨衣是厚厚的一次性塑料薄膜，穿一次就扔了。雨伞却能用上好几年完成同样的工作。",mascot:"下一次雨，穿一次雨衣，每次都直送我的垃圾填埋场。"},
+    {q:"家庭垃圾桶用普通塑料垃圾袋，还是用可生物降解的玉米淀粉袋——哪一种送往实马高的塑料更多？",opts:["塑料垃圾袋","可生物降解玉米淀粉袋"],correct:2,isTrick:true,fact:"陷阱题！新加坡几乎所有的家庭垃圾在到达我这里之前都会先焚烧。两种垃圾袋剩下的灰烬最终都会送到实马高。两种袋子在这一点上没有区别。",mascot:"塑料袋还是玉米袋，最后都变成灰烬进了我的后院！"},
+    {q:"把没洗过、沾油的塑料容器丢进蓝色回收桶，还是先洗干净再丢——哪一种最终送往实马高的塑料更多？",opts:["未清洗的油污容器","已清洗的容器"],correct:0,fact:"一个油腻的容器就能污染整个回收桶，导致里面所有东西都被拒收，直接转送到我这里。冲洗30秒就能拯救一整桶的可回收物。",mascot:"一个油腻的盒子毁了大家辛苦分类的回收物。请先洗干净！"}
+  ]
+],
+ms:[
+  [
+    {q:"Membeli makanan bungkus dalam bekas plastik berbanding makan di tempat menggunakan pinggan boleh guna semula — yang manakah menghasilkan lebih banyak sisa plastik?",opts:["Bekas plastik bungkus","Makan di tempat"],correct:0,fact:"Singapura menghasilkan 868,000 tan sisa plastik dalam setahun, tetapi hanya 4 peratus yang dikitar semula. Bekas bungkus tercemar dengan makanan, jadi hampir semuanya terus ke Semakau.",mascot:"Wah, setiap kotak bungkus tiket sehala terus ke rumah saya lor!"},
+    {q:"Mengambil beg plastik untuk bungkusan anda berbanding membawa bekas dengan tangan — yang manakah menggunakan lebih banyak plastik sekali guna?",opts:["Beg plastik","Bawa dengan tangan"],correct:0,fact:"Beg plastik direka untuk satu perjalanan pulang sahaja, kemudian menjadi sampah. Tidak mengambil beg adalah cara paling mudah untuk jimat plastik hari ini.",mascot:"Satu beg tambahan, satu lagi benda untuk saya telan!"},
+    {q:"Menerima satu set kutleri plastik (sudu, garfu, penyepit) berbanding menggunakan set boleh guna semula sendiri — yang manakah menghasilkan lebih banyak plastik tidak boleh kitar semula?",opts:["Set kutleri plastik","Set boleh guna semula"],correct:0,fact:"Satu set kutleri sebenarnya adalah tiga item plastik berasingan dalam satu bungkusan. Semuanya tersentuh makanan, jadi tidak satu pun boleh dikitar semula.",mascot:"Pakej 3 dalam 1, tapi semua 3 jadi milik saya!"},
+    {q:"Minuman ais dalam cawan plastik dengan straw berbanding minuman panas dalam cawan seramik — yang manakah menghasilkan lebih banyak plastik sekali guna?",opts:["Cawan plastik dan straw","Cawan seramik"],correct:0,fact:"Cawan, penutup, straw — itu tiga keping plastik sekali guna untuk satu minuman sahaja. Cawan seramik di pusat penjaja menghasilkan sifar.",mascot:"Tiga keping plastik untuk SATU minuman, serius ah?"},
+    {q:"Membungkus nasi ayam dalam bungkusan kertas perang tradisional (berlapis filem plastik) berbanding kotak bento plastik tebal — yang manakah menghantar lebih banyak plastik mengikut berat ke Semakau?",opts:["Bungkusan kertas perang","Kotak bento plastik tebal"],correct:1,fact:"Jerat! Bungkusan kertas juga ada lapisan plastik nipis, tetapi kotak bento yang tegar mempunyai jisim plastik yang jauh lebih banyak secara keseluruhan.",mascot:"Kedua-dua ada plastik lah, tapi kotak itu juara berat sampah."}
+  ],
+  [
+    {q:"Membayar 5 sen untuk beg plastik di FairPrice berbanding membawa beg kanvas boleh guna semula sendiri — yang manakah membazirkan lebih banyak plastik sekali guna?",opts:["Beg plastik dari FairPrice","Beg kanvas boleh guna semula"],correct:0,fact:"Kadar kitar semula plastik Singapura hanya 6 peratus. Setiap beg plastik hampir pasti menjadi bahan tapak pelupusan.",mascot:"5 sen untuk beri saya satu beg? Murah untuk anda, mahal untuk bumi."},
+    {q:"Membeli epal yang telah dibungkus dalam beg plastik dengan dulang busa berbanding memilih epal longgar — yang manakah mempunyai kesan pembungkusan plastik yang lebih tinggi?",opts:["Epal yang telah dibungkus","Epal longgar"],correct:0,fact:"Buah yang telah dibungkus menambah beg plastik DAN dulang busa di atas makanan yang sebenarnya tidak memerlukan kedua-duanya.",mascot:"Epal tak perlu pakai kostum, sia."},
+    {q:"Membeli sabun tangan cecair dalam botol pam plastik baharu berbanding beg isi semula — yang manakah menghasilkan lebih banyak sisa plastik tegar?",opts:["Botol pam baharu","Beg isi semula"],correct:0,fact:"Botol pam yang tegar menggunakan plastik yang jauh lebih banyak mengikut berat berbanding beg isi semula yang nipis.",mascot:"Simpan botol, isi semula saja — botol anda tak perlu bersara setiap bulan!"},
+    {q:"Membeli pek snek kecil individu dalam satu beg besar berbanding satu pek bersaiz ekonomi — yang manakah menghasilkan lebih banyak pembalut plastik tidak boleh kitar semula?",opts:["Pek snek kecil individu","Satu pek besar ekonomi"],correct:0,fact:"Setiap pek snek kecil adalah pembalut tidak boleh kitar semula tersendiri. Dua puluh pek mini bermakna dua puluh keping filem plastik berbanding hanya satu.",mascot:"20 pembalut untuk satu keinginan? Saya hampir lemas dalam konfeti di sini."},
+    {q:"Membeli timun yang dibalut filem secara individu berbanding timun tempatan tanpa pembalut — yang manakah menghasilkan lebih banyak filem polietilena berketumpatan rendah yang menyumbat mesin kitar semula?",opts:["Timun berbalut filem","Timun tanpa pembalut"],correct:0,fact:"Filem pelekat (LDPE) adalah salah satu bahan paling teruk untuk kemudahan kitar semula. Ia menyumbat mesin dan mencemari keseluruhan kelompok.",mascot:"Timun dah ada kulit, kenapa nak balut lagi?!"}
+  ],
+  [
+    {q:"Memesan teh buih melalui Foodpanda dengan togol 'tidak perlukan kutleri' DIMATIKAN berbanding DIHIDUPKAN — yang manakah menghasilkan lebih banyak sisa plastik serta-merta?",opts:["Togol dimatikan","Togol dihidupkan"],correct:0,fact:"Meninggalkan togol itu dimatikan secara automatik menambah straw dan kutleri yang mungkin anda tidak perlukan. Satu ketik dalam aplikasi menjimatkan plastik sebenar.",mascot:"Satu togol kecil, satu straw kurang dalam perut saya. Kemenangan mudah!"},
+    {q:"Memesan item kecil secara dalam talian dengan polymailer dan bungkusan buih berbanding membeli terus dari kedai fizikal — yang manakah menghasilkan lebih banyak sisa plastik penghantaran?",opts:["Pesanan dalam talian dengan pembungkusan","Beli dari kedai fizikal"],correct:0,fact:"Pesanan dalam talian menambah polymailer, bungkusan buih, dan pita — lapisan plastik yang langsung tidak wujud dalam pembelian dari rak kedai.",mascot:"Banyaknya bungkusan buih untuk satu sarung telefon, walao."},
+    {q:"Memesan barangan runcit dalam talian yang dibungkus dalam beberapa beg plastik merah berbanding melawat pasar raya dengan troli — yang manakah mengumpul lebih banyak beg sekali guna?",opts:["Penghantaran runcit dalam talian","Pasar raya dengan troli"],correct:0,fact:"Penghantaran runcit dalam talian selalunya tiba dipisahkan kepada beberapa beg sekali guna secara lalai. Troli di kedai tidak menggunakan beg langsung.",mascot:"Kenapa saya dapat 6 beg untuk 6 barang? Boleh gabung dah!"},
+    {q:"Penghantaran e-dagang standard (item dibungkus secara individu dengan kusyen udara plastik) berbanding penghantaran konsolidasi (semua dalam satu kotak) — yang manakah menghasilkan lebih banyak sisa pembungkusan?",opts:["Penghantaran individu standard","Penghantaran konsolidasi"],correct:0,fact:"Memisahkan satu pesanan kepada penghantaran berasingan menggandakan kusyen udara, pita, dan kotak. Konsolidasi menjimatkan pembungkusan.",mascot:"3 kotak untuk 3 item yang sepatutnya berkongsi SATU kotak. Saya nampak awak."},
+    {q:"Memesan penghantaran makanan harian menggunakan bekas sekali guna selama seminggu berbanding memasak di rumah — yang manakah menghasilkan lebih banyak plastik tercemar tidak boleh kitar semula?",opts:["Penghantaran makanan harian","Memasak di rumah"],correct:0,fact:"Tujuh hari penghantaran bermakna tujuh bekas atau lebih, penutup, beg, dan set kutleri — semuanya tercemar makanan.",mascot:"Seminggu penghantaran dan rumah saya PENUH, boleh awak bayangkan?"}
+  ],
+  [
+    {q:"Minum air mineral botol import setiap hari berbanding minum dari botol boleh guna semula — yang manakah menghasilkan lebih banyak sisa botol PET?",opts:["Air mineral botol","Botol boleh guna semula"],correct:0,fact:"Satu botol sehari bermaksud lebih daripada 300 botol PET setahun, bagi setiap individu. Air paip Singapura selamat diminum.",mascot:"365 botol setahun hanya untuk air yang percuma dari paip awak!"},
+    {q:"Menggunakan tisu basah plastik sekali guna untuk membersihkan tangan berbanding membasuh dengan sabun dan air — yang manakah menghasilkan lebih banyak sisa mikrofiber plastik?",opts:["Tisu basah sekali guna","Sabun dan air"],correct:0,fact:"Kebanyakan tisu basah ditenun daripada gentian plastik seperti poliester, jadi ia tidak terbiodegradasi.",mascot:"Tisu basah nampak lembut tapi sebenarnya plastik tersembunyi!"},
+    {q:"Membeli jubah hujan plastik sekali guna semasa hujan lebat berbanding membawa payung boleh guna semula — yang manakah menghasilkan lebih banyak sisa plastik berjumlah besar?",opts:["Jubah hujan sekali guna","Payung boleh guna semula"],correct:0,fact:"Jubah hujan adalah filem plastik sekali guna yang tebal, dipakai sekali dan dibuang. Payung melakukan kerja yang sama selama bertahun-tahun.",mascot:"Satu hari hujan, satu jubah, satu perjalanan ke tapak pelupusan saya. Setiap kali."},
+    {q:"Menggunakan beg sampah plastik berbanding beg kanji jagung boleh terbiodegradasi untuk tong sampah rumah anda — yang manakah menghantar lebih banyak plastik ke Semakau?",opts:["Beg sampah plastik","Beg kanji jagung boleh terbiodegradasi"],correct:2,isTrick:true,fact:"Soalan jerat! Singapura membakar hampir semua sampah rumah sebelum ia sampai kepada saya. Abu yang tinggal daripada KEDUA-DUA jenis beg masih berakhir di Semakau.",mascot:"Beg plastik atau beg jagung, kedua-duanya jadi abu di belakang rumah saya juga!"},
+    {q:"Membuang bekas plastik berminyak yang belum dibasuh ke dalam tong kitar semula biru berbanding membasuhnya terlebih dahulu — yang manakah akhirnya menghantar lebih banyak plastik ke Semakau?",opts:["Bekas berminyak belum dibasuh","Bekas yang telah dibasuh"],correct:0,fact:"Satu bekas berminyak boleh mencemarkan keseluruhan tong kitar semula, menyebabkan semua benda di dalamnya ditolak dan dihantar terus kepada saya.",mascot:"Satu kotak berminyak merosakkan kitar semula semua orang. Basuh dulu, tolong!"}
+  ]
+],
+ta:[
+  [
+    {q:"பிளாஸ்டிக் கொள்கலனில் வாங்கி வரும் உணவு vs மீண்டும் பயன்படுத்தக்கூடிய தட்டுகளில் உள்ளேயே சாப்பிடுவது — எது அதிக பிளாஸ்டிக் கழிவை உருவாக்குகிறது?",opts:["பிளாஸ்டிக் டேக்அவே கொள்கலன்","மீள்பயன் தட்டுகளில் சாப்பிடுதல்"],correct:0,fact:"சிங்கப்பூர் ஒரு வருடத்தில் 868,000 டன் பிளாஸ்டிக் கழிவை உருவாக்கியது, ஆனால் அதில் 4% மட்டுமே மீள்சுழற்சி செய்யப்படுகிறது.",mascot:"வாவ், ஒவ்வொரு பாக்கெட்டும் என் வீட்டிற்கு ஒரு வழித் டிக்கெட் தான்!"},
+    {q:"உங்கள் பாக்கெட்டுக்கு பிளாஸ்டிக் பையை எடுப்பது vs கொள்கலனை கையால் சுமப்பது — எது அதிக ஒரு முறை பயன் பிளாஸ்டிக்கைப் பயன்படுத்துகிறது?",opts:["பிளாஸ்டிக் பை","கையால் சுமத்தல்"],correct:0,fact:"பிளாஸ்டிக் பைகள் ஒரு பயணத்திற்காக மட்டுமே வடிவமைக்கப்பட்டுள்ளன, பின் கழிவாகின்றன.",mascot:"ஒரு கூடுதல் பை, எனக்கு ஒரு கூடுதல் சுமை!"},
+    {q:"பிளாஸ்டிக் கட்லரி தொகுப்பை ஏற்பது vs உங்கள் சொந்த மீள்பயன் தொகுப்பைப் பயன்படுத்துவது — எது அதிக மீள்சுழற்சி செய்ய முடியாத பிளாஸ்டிக்கை உருவாக்குகிறது?",opts:["பிளாஸ்டிக் கட்லரி தொகுப்பு","மீள்பயன் தொகுப்பு"],correct:0,fact:"ஒரு கட்லரி தொகுப்பு உண்மையில் ஒரே பொட்டலத்தில் உள்ள மூன்று தனி பிளாஸ்டிக் பொருட்கள்.",mascot:"3 இல் 1 தொகுப்பு, ஆனால் மூன்றும் என்னிடம் வந்து சேருகின்றன!"},
+    {q:"ஸ்ட்ராவுடன் பிளாஸ்டிக் கப்பில் குளிர் பானம் vs சீனிக் கப்பில் சூடான பானம் — எது அதிக ஒரு முறை பயன் பிளாஸ்டிக்கை உருவாக்குகிறது?",opts:["பிளாஸ்டிக் கப் மற்றும் ஸ்ட்ரா","சீனிக் கப்"],correct:0,fact:"கப், மூடி, ஸ்ட்ரா — ஒரு பானத்திற்கு மூன்று ஒரு முறை பயன் பிளாஸ்டிக் பொருட்கள்.",mascot:"ஒரே ஒரு பானத்திற்கு மூன்று பிளாஸ்டிக் துண்டுகளா, நிஜமாகவா?"},
+    {q:"பாரம்பரிய பழுப்பு காகித பாக்கெட்டில் சிக்கன் ரைஸ் பேக் செய்வது vs தடிமனான பிளாஸ்டிக் பெண்டோ பெட்டியில் — எது எடை அடிப்படையில் சேமக்கௌவுக்கு அதிக பிளாஸ்டிக்கை அனுப்புகிறது?",opts:["பழுப்பு காகித பாக்கெட்","தடிமனான பிளாஸ்டிக் பெண்டோ பெட்டி"],correct:1,fact:"தந்திரம்! காகித பாக்கெட்டிலும் மெல்லிய பிளாஸ்டிக் படலம் உள்ளது, ஆனால் கடினமான பெண்டோ பெட்டியில் மிக அதிக பிளாஸ்டிக் நிறை உள்ளது.",mascot:"இரண்டிலும் பிளாஸ்டிக் இருக்கு, ஆனால் பெட்டி தான் கழிவின் ஹெவிவெயிட் சாம்பியன்!"}
+  ],
+  [
+    {q:"FairPrice இல் ஒரு பிளாஸ்டிக் பைக்கு 5 சென்ட் செலுத்துவது vs உங்கள் சொந்த மீள்பயன் கேன்வாஸ் பையைக் கொண்டு வருவது — எது அதிக ஒரு முறை பயன் பிளாஸ்டிக்கை வீணாக்குகிறது?",opts:["FairPrice பிளாஸ்டிக் பை","மீள்பயன் கேன்வாஸ் பை"],correct:0,fact:"சிங்கப்பூரின் பிளாஸ்டிக் மீள்சுழற்சி விகிதம் வெறும் 6% மட்டுமே.",mascot:"5 சென்ட் கொடுத்து எனக்கு ஒரு பை தரறீங்களா? உங்களுக்கு மலிவு, பூமிக்கு விலை அதிகம்."},
+    {q:"முன்கூட்டியே பேக் செய்யப்பட்ட ஆப்பிள்கள் vs தளர்வான ஆப்பிள்களை உங்கள் கூடைக்குள் நேரடியாக எடுப்பது — எது அதிக பிளாஸ்டிக் பேக்கேஜிங் தாக்கத்தை கொண்டுள்ளது?",opts:["முன்கூட்டியே பேக் செய்யப்பட்ட ஆப்பிள்கள்","தளர்வான ஆப்பிள்கள்"],correct:0,fact:"முன்கூட்டியே பேக் செய்யப்பட்ட பழங்கள் தேவையற்ற பிளாஸ்டிக் பை மற்றும் ஃபோம் தட்டு இரண்டையும் சேர்க்கின்றன.",mascot:"ஆப்பிளுக்கு வேடம் தேவையில்லை."},
+    {q:"புதிய பிளாஸ்டிக் பம்ப் பாட்டிலில் கையால் சோப்பு vs ரீஃபில் பவுச் — எது அதிக கடினமான பிளாஸ்டிக் கழிவை உருவாக்குகிறது?",opts:["புதிய பம்ப் பாட்டில்","ரீஃபில் பவுச்"],correct:0,fact:"கடினமான பம்ப் பாட்டில்கள் மெல்லிய ரீஃபில் பவுச்களைக் காட்டிலும் எடை அடிப்படையில் மிக அதிக பிளாஸ்டிக்கைப் பயன்படுத்துகின்றன.",mascot:"பாட்டிலை வைத்துக்கொண்டு நிரப்புங்கள் — உங்கள் பாட்டில் ஒவ்வொரு மாதமும் ஓய்வு பெற வேண்டியதில்லை!"},
+    {q:"ஒரு பெரிய பையில் தனித்தனி சிறிய ஸ்நாக் பேக்குகளை வாங்குவது vs ஒரு பெரிய எகானமி அளவு பேக்கை வாங்குவது — எது அதிக மீள்சுழற்சி செய்ய முடியாத பிளாஸ்டிக் ராப்பர்களை உருவாக்குகிறது?",opts:["தனித்தனி சிறிய ஸ்நாக் பேக்குகள்","ஒரு பெரிய எகானமி பேக்"],correct:0,fact:"ஒவ்வொரு சிறிய ஸ்நாக் பேக்கும் தனது சொந்த மீள்சுழற்சி செய்ய முடியாத ராப்பர். இருபது சிறிய பேக்குகள் என்றால் இருபது பிளாஸ்டிக் படலங்கள்.",mascot:"ஒரு ஆசைக்கு 20 ராப்பர்களா? நான் இங்கே கான்ஃபெட்டியில் மூழ்கிக் கொண்டிருக்கிறேன்."},
+    {q:"தனித்தனியாக க்ளிங் ராப் செய்யப்பட்ட வெள்ளரிக்காய் vs மூடப்படாத உள்ளூர் வெள்ளரிக்காய் — எது மீள்சுழற்சி இயந்திரங்களை அடைக்கும் LDPE படலத்தை அதிகமாக உருவாக்குகிறது?",opts:["க்ளிங் ராப் வெள்ளரிக்காய்","மூடப்படாத வெள்ளரிக்காய்"],correct:0,fact:"க்ளிங் ஃபிலிம் (LDPE) மீள்சுழற்சி வசதிகளுக்கு மிக மோசமான பொருட்களில் ஒன்று. இது இயந்திரங்களை அடைத்து முழு தொகுப்பையும் அசுத்தப்படுத்துகிறது.",mascot:"வெள்ளரிக்காய்க்கு ஏற்கனவே தோல் இருக்கே, இன்னும் ஏன் ராப் செய்யணும்?!"}
+  ],
+  [
+    {q:"Foodpanda வழியாக பப்பிள் டீ ஆர்டர் செய்யும்போது கட்லரி டாகுளை அணைத்து வைப்பது vs இயக்கி வைப்பது — எது உடனடியாக அதிக பிளாஸ்டிக் கழிவை உருவாக்குகிறது?",opts:["டாகுள் அணைக்கப்பட்டது","டாகுள் இயக்கப்பட்டது"],correct:0,fact:"அந்த டாகுளை அணைத்து வைப்பது உங்களுக்கு தேவைப்படாத ஸ்ட்ராவையும் கட்லரியையும் தானாகவே சேர்க்கிறது.",mascot:"ஒரு சிறிய டாகுள், என் வயிற்றில் ஒரு ஸ்ட்ரா குறைவு. எளிய வெற்றி!"},
+    {q:"பாலிமெய்லர் மற்றும் பப்பிள் ராப்புடன் ஒரு சிறிய பொருளை ஆன்லைனில் ஆர்டர் செய்வது vs உடல்நிலை கடையில் இருந்து வாங்குவது — எது அதிக ஷிப்பிங் பிளாஸ்டிக் கழிவை உருவாக்குகிறது?",opts:["பேக்கேஜிங்குடன் ஆன்லைன் ஆர்டர்","உடல்நிலை கடையில் இருந்து வாங்குதல்"],correct:0,fact:"ஆன்லைன் ஆர்டர்கள் பாலிமெய்லர், பப்பிள் ராப், டேப் ஆகியவற்றை அடுக்கி வைக்கின்றன.",mascot:"ஒரு ஃபோன் கேஸுக்கு இவ்வளவு பப்பிள் ராப்பா, வலாவோ."},
+    {q:"பல சிவப்பு பிளாஸ்டிக் கேரியர் பைகளில் பேக் செய்யப்பட்டு வரும் ஆன்லைன் மளிகை ஆர்டர் vs டிராலியுடன் சூப்பர்மார்க்கெட்டுக்குச் செல்வது — எது அதிக ஒரு முறை பயன் பைகளைச் சேர்க்கிறது?",opts:["ஆன்லைன் மளிகை டெலிவரி","டிராலியுடன் சூப்பர்மார்க்கெட்"],correct:0,fact:"ஆன்லைன் மளிகை ஓட்டங்கள் பெரும்பாலும் இயல்பாக பல ஒரு முறை பயன் பைகளில் பிரிக்கப்பட்டு வருகின்றன.",mascot:"ஏன் 6 பொருட்களுக்கு 6 பைகள் கிடைக்கிறது? ஒன்றாக்கலாமே!"},
+    {q:"நிலையான மின்வணிக ஷிப்பிங் (தனித்தனியாக பிளாஸ்டிக் ஏர் குஷன்களுடன்) vs ஒன்றிணைக்கப்பட்ட ஷிப்பிங் — எது அதிக பேக்கேஜிங் கழிவை உருவாக்குகிறது?",opts:["நிலையான தனிப்பட்ட ஷிப்பிங்","ஒன்றிணைக்கப்பட்ட ஷிப்பிங்"],correct:0,fact:"ஒரு ஆர்டரை தனித்தனி ஷிப்மென்ட்களாகப் பிரிப்பது ஏர் குஷன்கள், டேப், பெட்டிகளை பெருக்குகிறது.",mascot:"ஒரே பெட்டியைப் பகிர்ந்திருக்க வேண்டிய 3 பொருட்களுக்கு 3 பெட்டிகள். நான் பார்க்கிறேன்!"},
+    {q:"ஒரு வாரத்திற்கு தினமும் ஒரு முறை பயன் கொள்கலன்களைப் பயன்படுத்தி உணவு டெலிவரி ஆர்டர் செய்வது vs வீட்டில் சமைப்பது — எது அதிக அசுத்தமான பிளாஸ்டிக்கை உருவாக்குகிறது?",opts:["தினசரி உணவு டெலிவரி","வீட்டில் சமைப்பது"],correct:0,fact:"ஏழு நாட்கள் டெலிவரி என்றால் ஏழுக்கும் மேற்பட்ட கொள்கலன்கள், மூடிகள், பைகள், கட்லரி தொகுப்புகள்.",mascot:"ஒரு வாரம் டெலிவரி, என் வீடு நிறைந்துவிட்டது, கற்பனை செய்ய முடியுமா?"}
+  ],
+  [
+    {q:"ஒவ்வொரு நாளும் இறக்குமதி செய்யப்பட்ட பாட்டில் மினரல் வாட்டர் குடிப்பது vs மீள்பயன் ஃபிளாஸ்கில் இருந்து குடிப்பது — எது அதிக PET பாட்டில் கழிவை உருவாக்குகிறது?",opts:["பாட்டில் மினரல் வாட்டர்","மீள்பயன் ஃபிளாஸ்க்"],correct:0,fact:"ஒரு நாளுக்கு ஒரு பாட்டில் என்றால் ஒரு நபருக்கு ஆண்டுக்கு 300க்கும் மேற்பட்ட PET பாட்டில்கள்.",mascot:"உங்கள் குழாயிலிருந்து இலவசமாக வரும் தண்ணீருக்கு ஆண்டுக்கு 365 பாட்டில்களா!"},
+    {q:"கைகளை சுத்தம் செய்ய ஒரு முறை பயன் பிளாஸ்டிக் ஈரத் துணிகளைப் பயன்படுத்துவது vs சோப்பு மற்றும் தண்ணீரால் கழுவுவது — எது அதிக பிளாஸ்டிக் மைக்ரோஃபைபர் கழிவை உருவாக்குகிறது?",opts:["ஒரு முறை பயன் ஈரத் துணிகள்","சோப்பு மற்றும் தண்ணீர்"],correct:0,fact:"பெரும்பாலான ஈரத் துணிகள் பாலியஸ்டர் போன்ற பிளாஸ்டிக் இழைகளால் நெய்யப்பட்டுள்ளன, எனவே அவை மக்கிப் போகாதவை.",mascot:"ஈரத் துணிகள் மென்மையாகத் தோன்றும், ஆனால் அவை மறைந்த பிளாஸ்டிக்!"},
+    {q:"திடீர் மழையின் போது ஒரு முறை பயன் பிளாஸ்டிக் ரெய்ன் பான்சோவை வாங்குவது vs மீள்பயன் குடையைக் கொண்டு செல்வது — எது அதிக மொத்த பிளாஸ்டிக் கழிவை உருவாக்குகிறது?",opts:["ஒரு முறை பயன் ரெய்ன் பான்சோ","மீள்பயன் குடை"],correct:0,fact:"ஒரு பான்சோ தடிமனான ஒரு முறை பயன் பிளாஸ்டிக் படலம், ஒரு முறை அணிந்து வீசப்படுகிறது.",mascot:"ஒரு மழை நாள், ஒரு பான்சோ, என் நிலத்தடி குப்பைக்கு ஒரு பயணம். ஒவ்வொரு முறையும்."},
+    {q:"உங்கள் வீட்டு குப்பைத் தொட்டிக்கு பிளாஸ்டிக் குப்பை பை vs மக்கிப்போகும் கார்ன்ஸ்டார்ச் பை — எது சேமக்கௌவுக்கு அதிக பிளாஸ்டிக்கை அனுப்புகிறது?",opts:["பிளாஸ்டிக் குப்பை பை","மக்கிப்போகும் கார்ன்ஸ்டார்ச் பை"],correct:2,isTrick:true,fact:"தந்திர கேள்வி! சிங்கப்பூர் கிட்டத்தட்ட அனைத்து வீட்டு குப்பையையும் எரித்து விடுகிறது. இரண்டு பை வகைகளிலும் இருந்து மிஞ்சும் சாம்பல் இன்னும் சேமக்கௌவில் முடிவடைகிறது.",mascot:"பிளாஸ்டிக் பையோ கார்ன் பையோ, இரண்டும் என் வீட்டுப் பின்புறத்தில் சாம்பலாக முடிகிறது!"},
+    {q:"கழுவாத, எண்ணெய் தடவிய பிளாஸ்டிக் கொள்கலன்களை நீல மீள்சுழற்சி தொட்டியில் போடுவது vs முதலில் கழுவுவது — எது இறுதியில் சேமக்கௌவுக்கு அதிக பிளாஸ்டிக்கை அனுப்புகிறது?",opts:["கழுவாத எண்ணெய் கொள்கலன்கள்","கழுவிய கொள்கலன்கள்"],correct:0,fact:"ஒரு எண்ணெய் கொள்கலன் ஒரு முழு மீள்சுழற்சி தொட்டியையும் அசுத்தப்படுத்தலாம். 30 செக்கன் கழுவுதல் ஒரு முழு தொட்டியின் மீள்சுழற்சி பொருட்களை காப்பாற்றும்.",mascot:"ஒரு எண்ணெய் பெட்டி எல்லோருடைய நல்ல மீள்சுழற்சியையும் கெடுக்கிறது. முதலில் கழுவுங்கள்!"}
+  ]
+]
+};
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function t(key){ return (I18N[currentLang]||{})[key]||(I18N.en||{})[key]||key; }
+function cats(){ return CATEGORIES[currentLang]||CATEGORIES.en; }
+function qs(c,r){ return (QUESTIONS[currentLang]||QUESTIONS.en)[c][r]; }
+
+/* ============================================================
+   SOUND ENGINE
+============================================================ */
+let soundOn=true, audioCtx=null;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function beep(freq,dur,type,vol){if(!soundOn)return;try{const ctx=getCtx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;gain.gain.value=vol||.15;osc.connect(gain);gain.connect(ctx.destination);osc.start();gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);osc.stop(ctx.currentTime+dur);}catch(e){}}
+function playCorrect(){beep(523,.12,'sine');setTimeout(()=>beep(784,.18,'sine'),110);}
+function playWrong(){beep(180,.3,'sawtooth',.12);}
+function playClick(){beep(660,.06,'square',.08);}
+function playTrick(){beep(440,.1,'triangle');setTimeout(()=>beep(330,.1,'triangle'),100);setTimeout(()=>beep(440,.15,'triangle'),200);}
+function playDamage(){beep(150,.25,'sawtooth',.18);setTimeout(()=>beep(100,.3,'sawtooth',.15),150);}
+function playSiren(){if(!soundOn)return;let f=600,rising=true;const iv=setInterval(()=>{beep(f,.15,'sawtooth',.1);f=rising?f+80:f-80;if(f>1000)rising=false;if(f<500)rising=true;},150);setTimeout(()=>clearInterval(iv),3000);}
+function playCountBeep(){beep(880,.15,'square',.15);}
+function playVictory(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.2,'sine'),i*120));}
+function playLoss(){[400,300,200,100].forEach((f,i)=>setTimeout(()=>beep(f,.3,'sawtooth',.15),i*150));}
+
+/* ============================================================
+   CONFETTI
+============================================================ */
+function fireConfetti(){
+  const colors=['#ffd23f','#4ade80','#60a5fa','#fb923c','#f87171','#c084fc'];
+  const layer=document.getElementById('confettiLayer');
+  for(let i=0;i<70;i++){
+    const p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration=(2+Math.random()*2)+'s';
+    p.style.animationDelay=(Math.random()*.6)+'s';
+    layer.appendChild(p);
+    setTimeout(()=>p.remove(),4500);
+  }
+}
+
+/* ============================================================
+   GAME STATE
+============================================================ */
+const POINTS=[100,200,300,400,500];
+const TEAMS=['Team 1','Team 2','Team 3'];
+const TEAM_COLORS=['#60a5fa','#34d399','#fb923c'];
+const STRIKE_LIMIT=10, QUESTION_SECS=30, BONUS_Q_COUNT=5, BONUS_SECS=15;
+
+let currentLang='en', gameMode='team';
+let scores,used,currentTeam,currentCell,selectedTeamForAward;
+let totalStrikes,teamStats,costliestWrong,islandLost,bonusRoundActive;
+let soloScore,soloCorrect,soloWrong;
+let questionTimerInterval=null, bonusTimerInterval=null;
+let bonusPool=[],bonusIndex=0,bonusTimeLeft=0;
+
+function initGame(){
+  scores=[0,0,0];
+  used=Array.from({length:4},()=>Array(5).fill(false));
+  currentTeam=0;currentCell=null;selectedTeamForAward=0;
+  totalStrikes=0;islandLost=false;bonusRoundActive=false;
+  soloScore=0;soloCorrect=0;soloWrong=0;
+  teamStats=[0,1,2].map(()=>({correct:0,wrong:0,skipped:0,pointsWon:0}));
+  costliestWrong=null;
+  document.getElementById('winBanner').innerHTML='';
+  document.getElementById('statsScreen').innerHTML='';
+  renderHelp();renderScoreboard();renderBoard();renderDamage();
+}
+
+/* ============================================================
+   MODE SELECT — wired with addEventListener, no inline onclick
+============================================================ */
+document.getElementById('btnSolo').addEventListener('click',()=>startMode('solo'));
+document.getElementById('btnTeam').addEventListener('click',()=>startMode('team'));
+document.getElementById('langSelectMode').addEventListener('change',function(){currentLang=this.value;});
+document.getElementById('langSelect').addEventListener('change',function(){setLanguage(this.value);});
+document.getElementById('helpBtn').addEventListener('click',toggleHelp);
+document.getElementById('soundToggle').addEventListener('click',function(){soundOn=!soundOn;this.textContent=soundOn?'🔊':'🔇';});
+
+function startMode(mode){
+  gameMode=mode;
+  currentLang=document.getElementById('langSelectMode').value;
+  document.getElementById('langSelect').value=currentLang;
+  document.getElementById('modeScreen').style.display='none';
+  document.getElementById('wrap').style.display='block';
+  document.getElementById('gameTitle').textContent=t('title');
+  document.getElementById('gameSub').textContent=t('subtitle');
+  document.getElementById('islandLabel').textContent=t('islandLabel');
+  document.getElementById('mascotSpeech').textContent=t('mascotIntro');
+  initGame();
+}
+
+function setLanguage(lang){
+  currentLang=lang;
+  document.getElementById('langSelect').value=lang;
+  document.getElementById('gameTitle').textContent=t('title');
+  document.getElementById('gameSub').textContent=t('subtitle');
+  document.getElementById('islandLabel').textContent=t('islandLabel');
+  document.getElementById('mascotSpeech').textContent=t('mascotIntro');
+  renderHelp();renderScoreboard();renderBoard();renderDamage();
+}
+
+/* ============================================================
+   HOW TO PLAY
+============================================================ */
+function toggleHelp(){
+  const panel=document.getElementById('helpPanel');
+  const btn=document.getElementById('helpBtn');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  btn.setAttribute('aria-expanded',open?'true':'false');
+}
+function renderHelp(){
+  const solo=gameMode==='solo';
+  document.getElementById('helpInner').innerHTML=`
+    <h3>❓ How to Play</h3>
+    <div class="help-grid">
+      <div class="help-section"><strong>🎯 Objective</strong>${solo?'Answer all 20 questions. Score points for correct answers and keep Pulau Semakau alive.':'3 teams take turns. Host awards points. Most points at the end wins.'}</div>
+      <div class="help-section"><strong>📋 Picking a question</strong>Click any point value on the board. Guess which option generates more plastic waste.</div>
+      <div class="help-section"><strong>🏝️ Island health</strong>Every wrong answer or skip adds a strike. At 10 strikes the island is declared lost and a bonus round triggers.</div>
+      <div class="help-section"><strong>⚠️ Bonus round</strong>5 random questions, 15 seconds each. Sudden death — one wrong answer ends it instantly.</div>
+      ${solo?`<div class="help-section"><strong>⏱️ No timer in solo</strong>Take your time. Points are awarded automatically for correct answers.</div>
+      <div class="help-section"><strong>🧮 Scoring</strong>100–500 points per question depending on difficulty.</div>`
+      :`<div class="help-section"><strong>🏆 Awarding points</strong>After each reveal the host can award points to ANY team — useful for audience shout-outs.</div>
+      <div class="help-section"><strong>⏭️ Skipping</strong>"Skip points" moves on without awarding. The question is still consumed and will not return to the board.</div>`}
+    </div>`;
+}
+
+/* ============================================================
+   SCOREBOARD
+============================================================ */
+function renderScoreboard(){
+  const sb=document.getElementById('scoreboard');
+  const ti=document.getElementById('turnIndicator');
+  if(gameMode==='solo'){
+    sb.innerHTML=`<div class="solo-score-bar"><div class="solo-score-label">Your score</div><div class="solo-score-value" id="soloScoreDisplay">${soloScore}</div><div class="solo-score-sub" id="soloScoreSub">${soloCorrect} correct · ${soloWrong} wrong · ${totalStrikes}/${STRIKE_LIMIT} strikes</div></div>`;
+    ti.textContent='🎯 '+t('pickPrompt');
+    return;
+  }
+  sb.innerHTML=TEAMS.map((team,i)=>`
+    <div class="score-card ${i===currentTeam?'active':''}">
+      <div class="team-name">${team}</div>
+      <div class="team-score" id="score-${i}" style="color:${TEAM_COLORS[i]}">${scores[i]}</div>
+      <span class="team-badge" style="background:${TEAM_COLORS[i]}22;color:${TEAM_COLORS[i]}">${i===currentTeam?'▶ '+t('onTheClock'):t('waiting')}</span>
+    </div>`).join('');
+  ti.textContent='🎯 '+TEAMS[currentTeam]+', '+t('pickPrompt');
+}
+function popScore(idx){const el=document.getElementById('score-'+idx);if(!el)return;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
+function updateSoloDisplay(){
+  const v=document.getElementById('soloScoreDisplay');if(v)v.textContent=soloScore;
+  const s=document.getElementById('soloScoreSub');if(s)s.textContent=`${soloCorrect} correct · ${soloWrong} wrong · ${totalStrikes}/${STRIKE_LIMIT} strikes`;
+}
+
+/* ============================================================
+   BOARD — real <button> elements for accessibility
+============================================================ */
+function renderBoard(){
+  const c=cats();
+  let html=c.map(cat=>`<div class="cat-header" role="columnheader"><span class="cat-icon" aria-hidden="true">${cat.icon}</span><span class="cat-name">${cat.name}</span></div>`).join('');
+  for(let r=0;r<5;r++){
+    for(let col=0;col<4;col++){
+      if(used[col][r]){
+        html+=`<button class="cell used" disabled aria-label="Already answered" aria-disabled="true">✓</button>`;
+      } else {
+        html+=`<button class="cell" data-cat="${col}" data-row="${r}" aria-label="${c[col].name}, ${POINTS[r]} ${t('points')}">${POINTS[r]}</button>`;
+      }
+    }
+  }
+  const board=document.getElementById('board');
+  board.innerHTML=html;
+  board.querySelectorAll('.cell:not(.used)').forEach(btn=>{
+    btn.addEventListener('click',()=>openQuestion(+btn.dataset.cat,+btn.dataset.row));
+  });
+}
+
+/* ============================================================
+   ISLAND
+============================================================ */
+function getIslandSVG(stage){
+  const p=[{sea:'#1d6fa3',sand:'#e8d28a',grass:'#3fae6c',trunk:'#7a5230'},{sea:'#1d6fa3',sand:'#d9c279',grass:'#7a9c3f',trunk:'#6b4828'},{sea:'#3a6a82',sand:'#a98f5a',grass:'#8a7a3a',trunk:'#5a3f22'},{sea:'#48505a',sand:'#5c5346',grass:'#4a4030',trunk:'#3a2f20'}][stage];
+  const palmOp=stage>=3?.3:1, lc=stage>=2?'#5a6b30':'#2f8f4f', face=['🙂','😕','😟','💀'][stage];
+  return `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="150" cy="150" rx="148" ry="28" fill="${p.sea}" opacity=".7"/>
+    <ellipse cx="150" cy="138" rx="120" ry="30" fill="${p.sea}"/>
+    <ellipse cx="150" cy="120" rx="105" ry="38" fill="${p.sand}"/>
+    <ellipse cx="150" cy="108" rx="80" ry="28" fill="${p.grass}"/>
+    <g opacity="${palmOp}">
+      <rect x="94" y="76" width="6" height="34" fill="${p.trunk}" rx="2"/>
+      <path d="M97 78 Q78 64 62 70 Q80 74 97 84" fill="${lc}"/>
+      <path d="M97 78 Q116 60 132 67 Q113 75 97 84" fill="${lc}"/>
+      <path d="M97 78 Q90 57 99 46 Q104 60 97 84" fill="${stage>=2?'#4a5b25':'#249444'}"/>
+    </g>
+    <g opacity="${palmOp}">
+      <rect x="199" y="83" width="5" height="28" fill="${p.trunk}" rx="2"/>
+      <path d="M201 84 Q186 72 174 77 Q188 81 201 90" fill="${lc}"/>
+      <path d="M201 84 Q216 70 229 76 Q213 83 201 90" fill="${lc}"/>
+    </g>
+    ${stage>=1?`<circle cx="118" cy="116" r="4" fill="#888" opacity=".7"/><rect x="158" y="120" width="9" height="5" fill="#aaa" opacity=".6" rx="1"/>`:``}
+    ${stage>=2?`<circle cx="138" cy="110" r="5" fill="#777" opacity=".75"/><rect x="98" y="123" width="11" height="6" fill="#999" opacity=".6" rx="1" transform="rotate(15 103 126)"/>`:``}
+    ${stage>=3?`<circle cx="174" cy="106" r="6" fill="#666" opacity=".85"/><rect x="128" y="98" width="13" height="7" fill="#888" opacity=".7" rx="1" transform="rotate(-10 134 102)"/>`:``}
+    <text x="150" y="118" font-size="32" text-anchor="middle">${face}</text>
+  </svg>`;
+}
+function renderDamage(){
+  const pct=Math.min(100,totalStrikes/STRIKE_LIMIT*100);
+  document.getElementById('damageBarFill').style.width=pct+'%';
+  document.getElementById('damageBar').setAttribute('aria-valuenow',totalStrikes);
+  let stage=0,statusKey='damageHealthy';
+  if(totalStrikes>=STRIKE_LIMIT){stage=3;statusKey='damageCritical';}
+  else if(totalStrikes>=STRIKE_LIMIT*.6){stage=2;statusKey='damageCritical';}
+  else if(totalStrikes>=STRIKE_LIMIT*.3){stage=1;statusKey='damageDamaged';}
+  document.getElementById('islandStage').innerHTML=getIslandSVG(stage);
+  const word=totalStrikes===1?'strike':t('strikes');
+  document.getElementById('damageText').textContent=`${totalStrikes} ${word} / ${STRIKE_LIMIT} — ${t(statusKey)}`;
+}
+function spawnTrash(){
+  const stage=document.getElementById('islandStage');
+  const emojis=['🗑️','🥤','🛍️','🧴','📦'];
+  const p=document.createElement('div');
+  p.className='trash-particle';
+  p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  p.style.left=(30+Math.random()*220)+'px';p.style.top='0px';
+  p.style.animation='trashFall 1.2s ease forwards';
+  stage.appendChild(p);setTimeout(()=>p.remove(),1300);
+}
+function shakeIsland(){const el=document.getElementById('islandStage');el.classList.remove('island-shake');void el.offsetWidth;el.classList.add('island-shake');}
+function reactMascot(happy){const f=document.getElementById('mascotFace');f.classList.remove('react-happy','react-sad');void f.offsetWidth;f.classList.add(happy?'react-happy':'react-sad');}
+function registerStrike(){
+  totalStrikes++;playDamage();shakeIsland();spawnTrash();spawnTrash();renderDamage();
+  if(gameMode==='solo')updateSoloDisplay();
+  if(totalStrikes>=STRIKE_LIMIT&&!islandLost&&!bonusRoundActive){islandLost=true;setTimeout(beginBonusTransition,900);}
+}
+
+/* ============================================================
+   QUESTION FLOW
+============================================================ */
+function openQuestion(cat,row){
+  if(used[cat][row])return;
+  playClick();currentCell={cat,row};selectedTeamForAward=currentTeam;
+  renderModal(qs(cat,row),POINTS[row],cat,false,null);
+}
+function renderModal(q,pts,cat,revealed,chosenIdx){
+  clearInterval(questionTimerInterval);
+  document.getElementById('overlay').style.display='flex';
+  const c=cats();
+  const optBtns=q.opts.map((o,i)=>{
+    let cls='opt-btn';
+    if(revealed){if(i===q.correct)cls+=' correct';else if(i===chosenIdx)cls+=' wrong';}
+    return `<button class="${cls}" ${revealed?'disabled':''} data-idx="${i}" aria-label="Option ${i+1}: ${o}">${o}</button>`;
+  }).join('');
+  const timerHtml=(!revealed&&gameMode==='team')?`<div class="timer-row"><div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-label" id="timerLabel">${QUESTION_SECS}s</div></div>`:'';
+  let resultHtml='',mascotHtml='';
+  if(revealed){
+    const isTrick=!!q.isTrick,isCorrect=!isTrick&&chosenIdx===q.correct;
+    const cls=isTrick?'trick':(isCorrect?'correct':'wrong');
+    const label=isTrick?t('trickQuestion'):(isCorrect?t('correct'):t('notQuite'));
+    resultHtml=`<div class="result-box ${cls}"><span class="fact-tag">${t('realFact')}</span><br><strong>${label}</strong> ${q.fact}</div>`;
+    mascotHtml=`<div class="mascot-react"><div class="mface" aria-hidden="true">🗑️</div><div class="mtext">"${q.mascot}"</div></div>`;
+  }
+  const teamBtns=TEAMS.map((team,i)=>`<button class="team-btn ${selectedTeamForAward===i?'selected':''}" data-team="${i}" id="atb-${i}">${team}</button>`).join('');
+  const footerHtml=revealed
+    ?(gameMode==='team'
+      ?`<div style="font-size:13px;color:#9fd8c4;margin-bottom:8px">${t('awardTo')}</div><div class="modal-footer"><div class="team-select">${teamBtns}</div><div style="display:flex;gap:8px;margin-top:8px"><button class="close-btn" id="skipBtn">${t('skip')}</button><button class="award-btn" id="awardBtn">${t('award')} ${pts} ${t('pts')}</button></div></div>`
+      :`<div class="modal-footer" style="justify-content:center"><button class="award-btn" id="nextBtn">Next ➡</button></div>`)
+    :`<div class="modal-footer"><button class="close-btn" id="cancelBtn">${t('cancel')}</button></div>`;
+  document.getElementById('modal').innerHTML=`
+    <div class="modal-tag">${c[cat].icon} ${c[cat].name}</div>
+    <div class="modal-pts">${pts} ${t('points')}</div>
+    ${timerHtml}
+    <div class="modal-question" id="modalQuestion">${q.q}</div>
+    <div class="options">${optBtns}</div>
+    ${mascotHtml}${resultHtml}${footerHtml}`;
+
+  // wire buttons with addEventListener — no inline onclick
+  document.querySelectorAll('.opt-btn:not([disabled])').forEach(btn=>{
+    btn.addEventListener('click',()=>answer(+btn.dataset.idx));
+  });
+  document.querySelectorAll('.team-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>selectAwardTeam(+btn.dataset.team));
+  });
+  const cancelBtn=document.getElementById('cancelBtn');
+  if(cancelBtn)cancelBtn.addEventListener('click',cancelQuestion);
+  const skipBtn=document.getElementById('skipBtn');
+  if(skipBtn)skipBtn.addEventListener('click',()=>closeModal(false));
+  const awardBtn=document.getElementById('awardBtn');
+  if(awardBtn)awardBtn.addEventListener('click',awardPoints);
+  const nextBtn=document.getElementById('nextBtn');
+  if(nextBtn)nextBtn.addEventListener('click',()=>closeModal(true));
+
+  // visible countdown — team mode only, pre-answer
+  if(!revealed&&gameMode==='team'){
+    let remaining=QUESTION_SECS;
+    questionTimerInterval=setInterval(()=>{
+      remaining--;
+      const fill=document.getElementById('timerFill'),label=document.getElementById('timerLabel');
+      if(!fill){clearInterval(questionTimerInterval);return;}
+      fill.style.width=(remaining/QUESTION_SECS*100)+'%';
+      label.textContent=remaining+'s';
+      if(remaining<=10){fill.classList.add('warn');label.classList.add('warn');}
+      if(remaining<=5){fill.classList.replace('warn','danger');label.classList.replace('warn','danger');}
+      if(remaining<=0){
+        clearInterval(questionTimerInterval);
+        used[currentCell.cat][currentCell.row]=true;
+        teamStats[currentTeam].skipped++;
+        registerStrike();
+        currentTeam=(currentTeam+1)%3;
+        document.getElementById('overlay').style.display='none';
+        renderScoreboard();renderBoard();renderDamage();checkAllUsed();
+      }
+    },1000);
+  }
+}
+function cancelQuestion(){clearInterval(questionTimerInterval);document.getElementById('overlay').style.display='none';currentCell=null;}
+function answer(idx){
+  clearInterval(questionTimerInterval);
+  const {cat,row}=currentCell;
+  const q=qs(cat,row);
+  const isTrick=!!q.isTrick, wasCorrect=!isTrick&&idx===q.correct;
+  if(gameMode==='solo'){
+    if(wasCorrect){playCorrect();reactMascot(true);soloScore+=POINTS[row];soloCorrect++;updateSoloDisplay();}
+    else{isTrick?playTrick():playWrong();reactMascot(false);soloWrong++;registerStrike();
+      if(!costliestWrong||POINTS[row]>costliestWrong.points)costliestWrong={team:'You',points:POINTS[row],category:(CATEGORIES.en[cat]||{}).name||''};}
+  } else {
+    if(isTrick){playTrick();reactMascot(false);teamStats[currentTeam].wrong++;registerStrike();}
+    else if(wasCorrect){playCorrect();reactMascot(true);teamStats[currentTeam].correct++;}
+    else{playWrong();reactMascot(false);teamStats[currentTeam].wrong++;registerStrike();
+      if(!costliestWrong||POINTS[row]>costliestWrong.points)costliestWrong={team:TEAMS[currentTeam],points:POINTS[row],category:(CATEGORIES.en[cat]||{}).name||''};}
+  }
+  renderModal(q,POINTS[row],cat,true,idx);
+}
+function selectAwardTeam(i){
+  selectedTeamForAward=i;
+  document.querySelectorAll('.team-btn').forEach((btn,idx)=>{btn.className='team-btn'+(+btn.dataset.team===i?' selected':'');});
+}
+function awardPoints(){
+  const {cat,row}=currentCell;
+  scores[selectedTeamForAward]+=POINTS[row];
+  teamStats[selectedTeamForAward].pointsWon+=POINTS[row];
+  playClick();popScore(selectedTeamForAward);closeModal(true);
+}
+function closeModal(wasAwarded){
+  clearInterval(questionTimerInterval);
+  if(currentCell){
+    used[currentCell.cat][currentCell.row]=true;
+    if(gameMode==='team'&&!wasAwarded)teamStats[currentTeam].skipped++;
+  }
+  currentTeam=(currentTeam+1)%3;
+  document.getElementById('overlay').style.display='none';
+  renderScoreboard();renderBoard();renderDamage();checkAllUsed();
+}
+function checkAllUsed(){if(used.every(col=>col.every(v=>v))&&!bonusRoundActive&&!islandLost)endGame(false);}
+
+/* ============================================================
+   BONUS TRANSITION — 3 stages
+============================================================ */
+function beginBonusTransition(){
+  clearInterval(questionTimerInterval);
+  document.getElementById('overlay').style.display='none';
+  const freeze=document.getElementById('freezeOverlay');
+  document.getElementById('freezeText').textContent=t('freezeText');
+  freeze.style.display='flex';playDamage();
+  setTimeout(()=>{freeze.style.display='none';startAlarmSequence();},1400);
+}
+function startAlarmSequence(){
+  const alarm=document.getElementById('alarmOverlay'),content=document.getElementById('alarmContent');
+  alarm.style.display='flex';playSiren();
+  content.innerHTML=`<div class="alarm-title">🚨 ${t('alarmTitle')} 🚨</div>`;
+  let count=3;
+  function tick(){
+    content.innerHTML=`<div class="alarm-title">🚨 ${t('alarmTitle')} 🚨</div><div class="alarm-count">${count}</div>`;
+    playCountBeep();count--;
+    if(count>=0)setTimeout(tick,1000);
+    else setTimeout(()=>{alarm.style.display='none';startBonusRound();},700);
+  }
+  setTimeout(tick,600);
+}
+
+/* ============================================================
+   BONUS ROUND
+============================================================ */
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startBonusRound(){
+  bonusRoundActive=true;
+  bonusPool=shuffle(Array.from({length:4},(_,c)=>Array.from({length:5},(_,r)=>({cat:c,row:r}))).flat()).slice(0,BONUS_Q_COUNT);
+  bonusIndex=0;
+  document.getElementById('bonusOverlay').style.display='flex';
+  renderBonusQuestion();
+}
+function renderBonusQuestion(){
+  if(bonusIndex>=bonusPool.length){bonusSuccess();return;}
+  const {cat,row}=bonusPool[bonusIndex];
+  const q=qs(cat,row),c=cats();
+  bonusTimeLeft=BONUS_SECS;
+  const dots=bonusPool.map((_,i)=>`<div class="bonus-dot${i<bonusIndex?' done':i===bonusIndex?' current':''}"></div>`).join('');
+  const optBtns=q.opts.map((o,i)=>`<button class="bonus-opt-btn" data-idx="${i}" aria-label="Option: ${o}">${o}</button>`).join('');
+  document.getElementById('bonusModal').innerHTML=`
+    <div class="bonus-header"><div class="bonus-title">⚠️ ${t('bonusTitle')} ⚠️</div><div class="bonus-warning">${t('bonusWarning')}</div></div>
+    <div class="bonus-progress">${dots}</div>
+    <div class="modal-tag">${c[cat].icon} ${c[cat].name} — ${bonusIndex+1}/${bonusPool.length}</div>
+    <div class="bonus-timer" id="bonusTimer">${bonusTimeLeft}</div>
+    <div class="modal-question">${q.q}</div>
+    <div class="options">${optBtns}</div>`;
+  document.querySelectorAll('.bonus-opt-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>bonusAnswer(+btn.dataset.idx));
+  });
+  if(bonusTimerInterval)clearInterval(bonusTimerInterval);
+  bonusTimerInterval=setInterval(()=>{
+    bonusTimeLeft--;
+    const el=document.getElementById('bonusTimer');
+    if(el){el.textContent=bonusTimeLeft;if(bonusTimeLeft<=5)el.classList.add('danger');}
+    if(bonusTimeLeft<=0){clearInterval(bonusTimerInterval);bonusFail();}
+  },1000);
+}
+function bonusAnswer(idx){
+  clearInterval(bonusTimerInterval);
+  const {cat,row}=bonusPool[bonusIndex];
+  const q=qs(cat,row);
+  if(q.isTrick||idx!==q.correct){bonusFail();return;}
+  playCorrect();bonusIndex++;setTimeout(renderBonusQuestion,500);
+}
+function bonusFail(){
+  clearInterval(bonusTimerInterval);playLoss();
+  document.getElementById('bonusModal').innerHTML=`<div class="bonus-header"><div class="bonus-title">💀 ${t('bonusTimeUp')}</div></div><div class="result-box wrong" style="margin-top:1rem">${t('bonusFail')}</div><div class="btn-row"><button class="restart-btn" id="bonusRestartBtn">${t('restart')}</button></div>`;
+  document.getElementById('bonusRestartBtn').addEventListener('click',()=>location.reload());
+  setTimeout(()=>endGame(true),2500);
+}
+function bonusSuccess(){
+  playVictory();fireConfetti();
+  document.getElementById('bonusModal').innerHTML=`<div class="bonus-header"><div class="bonus-title" style="color:#4ade80">🌴 ${t('bonusSuccess')}</div><div class="bonus-warning" style="color:#bbf7d0">${t('bonusSuccessSub')}</div></div>`;
+  totalStrikes=Math.floor(STRIKE_LIMIT*.3);islandLost=false;renderDamage();
+  setTimeout(()=>{document.getElementById('bonusOverlay').style.display='none';bonusRoundActive=false;renderScoreboard();renderBoard();checkAllUsed();},2800);
+}
+
+/* ============================================================
+   END GAME + STATS
+============================================================ */
+function endGame(islandWasLost){
+  clearInterval(questionTimerInterval);clearInterval(bonusTimerInterval);
+  if(!islandWasLost){playVictory();fireConfetti();}
+  if(gameMode==='solo'){
+    const acc=soloCorrect+soloWrong>0?Math.round(soloCorrect/(soloCorrect+soloWrong)*100):0;
+    document.getElementById('winBanner').innerHTML=`<div class="${islandWasLost?'loss-banner':'win-banner'}">${islandWasLost?'💀 Island lost!':'🏆 Challenge complete!'}<br><span style="font-size:16px">Score: ${soloScore} pts · Accuracy: ${acc}%</span><br><span style="font-size:13px;opacity:.8">${t('finalLine')}</span><div class="btn-row"><button class="restart-btn" id="viewStatsBtn">${t('viewStats')}</button></div></div>`;
+    document.getElementById('viewStatsBtn').addEventListener('click',showStats);
+    return;
+  }
+  const max=Math.max(...scores),winners=TEAMS.filter((_,i)=>scores[i]===max);
+  const html=islandWasLost
+    ?`<div class="loss-banner">💀 Island lost — game over!<br><span style="font-size:16px">${winners.join(' & ')} ${winners.length>1?'were':'was'} leading with ${max} ${t('pts')}</span><br><span style="font-size:13px;opacity:.8">${t('finalLine')}</span><div class="btn-row"><button class="restart-btn" id="viewStatsBtn">${t('viewStats')}</button></div></div>`
+    :`<div class="win-banner">🏆 ${t('gameOver')}<br>${winners.join(' & ')} ${winners.length>1?t('winsWithPlural'):t('winsWith')} ${max} ${t('pts')}!<br><span style="font-size:13px;color:#9fd8c4;font-weight:400">${t('finalLine')}</span><div class="btn-row"><button class="restart-btn" id="viewStatsBtn">${t('viewStats')}</button></div></div>`;
+  document.getElementById('winBanner').innerHTML=html;
+  document.getElementById('viewStatsBtn').addEventListener('click',showStats);
+}
+function showStats(){
+  const max=Math.max(...scores),mvpIdx=scores.indexOf(max);
+  let tc=0,tw=0,ts=0;teamStats.forEach(s=>{tc+=s.correct;tw+=s.wrong;ts+=s.skipped;});
+  const cw=costliestWrong?`${costliestWrong.team} — ${costliestWrong.points} ${t('pts')} (${costliestWrong.category})`:'—';
+  let inner='';
+  if(gameMode==='solo'){
+    const acc=soloCorrect+soloWrong>0?Math.round(soloCorrect/(soloCorrect+soloWrong)*100):0;
+    inner=`<div class="stats-grid" style="grid-template-columns:1fr"><div class="stat-team-card winner"><div class="stat-team-name" style="color:#ffd23f">Your results</div><div class="stat-row"><span>Final score</span><span>${soloScore}</span></div><div class="stat-row"><span>${t('teamAccuracy')}</span><span>${acc}%</span></div><div class="stat-row"><span>${t('teamCorrect')}</span><span>${soloCorrect}</span></div><div class="stat-row"><span>${t('teamWrong')}</span><span>${soloWrong}</span></div><div class="stat-row"><span>${t('islandStatus')}</span><span>${islandLost?t('lost'):t('saved')}</span></div><div class="stat-row"><span>${t('costliest')}</span><span>${cw}</span></div></div></div>`;
+  } else {
+    const cards=TEAMS.map((team,i)=>{const s=teamStats[i],att=s.correct+s.wrong,acc=att>0?Math.round(s.correct/att*100):0;return `<div class="stat-team-card ${i===mvpIdx?'winner':''}"><div class="stat-team-name" style="color:${TEAM_COLORS[i]}">${team} ${i===mvpIdx?'👑':''}</div><div class="stat-row"><span>${t('teamAccuracy')}</span><span>${acc}%</span></div><div class="stat-row"><span>${t('teamCorrect')}</span><span>${s.correct}</span></div><div class="stat-row"><span>${t('teamWrong')}</span><span>${s.wrong}</span></div><div class="stat-row"><span>${t('teamSkipped')}</span><span>${s.skipped}</span></div><div class="stat-row"><span>${t('points')}</span><span>${scores[i]}</span></div></div>`;}).join('');
+    inner=`<div class="mvp-banner">🏆 ${t('mvp')}: ${TEAMS[mvpIdx]}</div><div class="stats-grid">${cards}</div><div class="overall-stats"><div class="row"><span>${t('totalQuestions')}</span><span>20</span></div><div class="row"><span>${t('totalCorrect')}</span><span>${tc}</span></div><div class="row"><span>${t('totalWrong')}</span><span>${tw}</span></div><div class="row"><span>${t('totalSkipped')}</span><span>${ts}</span></div><div class="row"><span>${t('islandStatus')}</span><span>${islandLost?t('lost'):t('saved')}</span></div><div class="row"><span>${t('costliest')}</span><span>${cw}</span></div></div>`;
+  }
+  document.getElementById('statsScreen').innerHTML=`<div class="stats-screen"><div class="stats-title">📊 ${t('statsTitle')}</div>${inner}<div class="btn-row"><button class="restart-btn" id="restartFinalBtn">${t('restart')}</button></div></div>`;
+  document.getElementById('restartFinalBtn').addEventListener('click',()=>location.reload());
+  document.getElementById('statsScreen').scrollIntoView({behavior:'smooth'});
+}
+</script>
 </body>
 </html>
