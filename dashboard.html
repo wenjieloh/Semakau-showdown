@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Semakau Showdown — Results Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at top,#0d2b3e 0%,#061826 60%,#04101c 100%);color:#fff;min-height:100vh}
+.wrap{max-width:1000px;margin:0 auto;padding:2rem 1.5rem}
+h1{font-size:clamp(22px,4vw,30px);color:#ffd23f;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.sub{color:#9fd8c4;font-size:13px;margin-bottom:1.5rem;line-height:1.6}
+.note{background:#0e2738;border:2px solid #1d9e75;border-radius:12px;padding:1rem 1.25rem;font-size:13px;color:#d7f5e8;line-height:1.7;margin-bottom:1.5rem}
+.note strong{color:#4ade80}
+.drop-zone{border:2px dashed #2563eb66;border-radius:16px;padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:#0e273855}
+.drop-zone:hover,.drop-zone.dragover{border-color:#ffd23f;background:#0e273899}
+.drop-zone p{color:#9fd8c4;font-size:14px}
+.drop-zone .big{font-size:32px;margin-bottom:10px}
+input[type=file]{display:none}
+.file-list{margin-top:1rem;font-size:12px;color:#9fd8c4}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:1.5rem 0}
+.stat-card{background:linear-gradient(180deg,#14344a,#0c2335);border:2px solid #1d4e63;border-radius:14px;padding:14px;text-align:center}
+.stat-card .num{font-size:28px;font-weight:800;color:#ffd23f}
+.stat-card .lbl{font-size:11px;color:#9fd8c4;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
+.section-title{font-size:16px;font-weight:800;color:#ffd23f;margin:2rem 0 .75rem;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:12px;background:#0c2335;border-radius:10px;overflow:hidden}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #1a2c3a}
+th{background:#122e42;color:#ffd23f;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+tr:last-child td{border-bottom:none}
+.pct-bar{display:inline-block;height:8px;border-radius:4px;background:linear-gradient(90deg,#4ade80,#facc15,#ef4444);vertical-align:middle;margin-right:6px}
+.gap-row.low{color:#f87171;font-weight:700}
+.gap-row.mid{color:#facc15}
+.gap-row.high{color:#4ade80}
+select,button{font-family:inherit;font-size:13px;padding:8px 14px;border-radius:10px;border:2px solid #2563eb33;background:#0e2738;color:#fff;cursor:pointer}
+button.primary{background:#1d9e75;border-color:#1d9e75;color:#04342c;font-weight:800}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:1rem 0}
+.empty{color:#8fb8cc;font-size:13px;text-align:center;padding:2rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>📊 Semakau Showdown — Results Dashboard</h1>
+<p class="sub">Aggregate results across every student who played, and see exactly which questions and topics reveal the biggest knowledge gaps.</p>
+<div class="note">
+<strong>How this works:</strong> This page runs entirely in your browser — nothing is uploaded anywhere. Ask each student to click "Download results" at the end of their game (JSON file), collect those files however your school already allows (email, shared drive, USB, etc.), then drop them all in below at once.
+</div>
+<div class="drop-zone" id="dropZone">
+<div class="big">📁</div>
+<p><strong>Click to select files</strong> or drag & drop multiple result JSON files here</p>
+<input type="file" id="fileInput" multiple accept="application/json,.json">
+</div>
+<div class="file-list" id="fileList"></div>
+<div class="controls" id="controls" style="display:none">
+<button class="primary" id="clearBtn">Clear all &amp; start over</button>
+<button id="exportSummaryBtn">⬇️ Export summary (CSV)</button>
+</div>
+<div id="results"></div>
+</div>
+<script>
+let sessions=[];
+const dropZone=document.getElementById('dropZone');
+const fileInput=document.getElementById('fileInput');
+const fileList=document.getElementById('fileList');
+const controls=document.getElementById('controls');
+const resultsEl=document.getElementById('results');
+
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop',e=>{
+e.preventDefault();dropZone.classList.remove('dragover');
+handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change',()=>handleFiles(fileInput.files));
+document.getElementById('clearBtn').addEventListener('click',()=>{
+sessions=[];fileList.innerHTML='';controls.style.display='none';resultsEl.innerHTML='';fileInput.value='';
+});
+document.getElementById('exportSummaryBtn').addEventListener('click',exportSummaryCSV);
+
+function handleFiles(fileListObj){
+const files=Array.from(fileListObj).filter(f=>f.name.endsWith('.json'));
+if(!files.length)return;
+let loaded=0;
+files.forEach(file=>{
+const reader=new FileReader();
+reader.onload=ev=>{
+try{
+const data=JSON.parse(ev.target.result);
+if(data&&Array.isArray(data.answers)){
+sessions.push(data);
+const li=document.createElement('div');
+li.textContent=`✓ ${file.name} — ${data.answers.length} answers (${data.mode||'?'} mode, session ${data.sessionId||'?'})`;
+fileList.appendChild(li);
+}else{
+const li=document.createElement('div');
+li.style.color='#f87171';
+li.textContent=`✗ ${file.name} — not a recognised results file`;
+fileList.appendChild(li);
+}
+}catch(err){
+const li=document.createElement('div');
+li.style.color='#f87171';
+li.textContent=`✗ ${file.name} — could not be read (${err.message})`;
+fileList.appendChild(li);
+}
+loaded++;
+if(loaded===files.length){controls.style.display='flex';render();}
+};
+reader.readAsText(file);
+});
+}
+
+function allAnswers(){
+return sessions.flatMap(s=>s.answers||[]);
+}
+
+function render(){
+const answers=allAnswers();
+if(!answers.length){resultsEl.innerHTML='<div class="empty">No answers loaded yet.</div>';return;}
+
+const totalSessions=sessions.length;
+const totalAnswers=answers.length;
+const totalCorrect=answers.filter(a=>a.isCorrect).length;
+const overallAcc=totalAnswers?Math.round(totalCorrect/totalAnswers*100):0;
+
+let html=`<div class="stats-grid">
+<div class="stat-card"><div class="num">${totalSessions}</div><div class="lbl">Sessions / players</div></div>
+<div class="stat-card"><div class="num">${totalAnswers}</div><div class="lbl">Total answers logged</div></div>
+<div class="stat-card"><div class="num">${overallAcc}%</div><div class="lbl">Overall accuracy</div></div>
+</div>`;
+
+// Per-question gap analysis
+const byQ={};
+answers.forEach(a=>{
+const key=a.question;
+if(!byQ[key])byQ[key]={question:a.question,category:a.category,points:a.points,correct:0,total:0,wrongChoices:{}};
+byQ[key].total++;
+if(a.isCorrect)byQ[key].correct++;
+else{
+const wc=a.chosenText===null||a.chosenText===undefined?'(no answer / timed out)':a.chosenText;
+byQ[key].wrongChoices[wc]=(byQ[key].wrongChoices[wc]||0)+1;
+}
+});
+const qRows=Object.values(byQ).sort((x,y)=>(x.correct/x.total)-(y.correct/y.total));
+html+=`<div class="section-title">🔍 Knowledge gaps — weakest questions first</div>
+<table><thead><tr><th>Question</th><th>Category</th><th>Pts</th><th>Accuracy</th><th>Most common wrong answer</th></tr></thead><tbody>`;
+qRows.forEach(q=>{
+const pct=q.total?Math.round(q.correct/q.total*100):0;
+const cls=pct<40?'low':pct<70?'mid':'high';
+const topWrong=Object.entries(q.wrongChoices).sort((a,b)=>b[1]-a[1])[0];
+html+=`<tr><td>${escapeHtml(q.question)}</td><td>${escapeHtml(q.category)}</td><td>${q.points}</td><td class="gap-row ${cls}">${q.correct}/${q.total} (${pct}%)</td><td>${topWrong?escapeHtml(topWrong[0])+' × '+topWrong[1]:'—'}</td></tr>`;
+});
+html+='</tbody></table>';
+
+// Per-category accuracy
+const byCat={};
+answers.forEach(a=>{
+if(!byCat[a.category])byCat[a.category]={correct:0,total:0};
+byCat[a.category].total++;
+if(a.isCorrect)byCat[a.category].correct++;
+});
+html+=`<div class="section-title">📚 Accuracy by topic / category</div>
+<table><thead><tr><th>Category</th><th>Accuracy</th></tr></thead><tbody>`;
+Object.entries(byCat).sort((a,b)=>(a[1].correct/a[1].total)-(b[1].correct/b[1].total)).forEach(([cat,c])=>{
+const pct=c.total?Math.round(c.correct/c.total*100):0;
+const cls=pct<40?'low':pct<70?'mid':'high';
+html+=`<tr><td>${escapeHtml(cat)}</td><td class="gap-row ${cls}">${c.correct}/${c.total} (${pct}%)</td></tr>`;
+});
+html+='</tbody></table>';
+
+resultsEl.innerHTML=html;
+}
+
+function escapeHtml(s){
+const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;
+}
+
+function exportSummaryCSV(){
+const answers=allAnswers();
+if(!answers.length)return;
+const byQ={};
+answers.forEach(a=>{
+const key=a.question;
+if(!byQ[key])byQ[key]={question:a.question,category:a.category,points:a.points,correct:0,total:0};
+byQ[key].total++;
+if(a.isCorrect)byQ[key].correct++;
+});
+const rows=Object.values(byQ).sort((x,y)=>(x.correct/x.total)-(y.correct/y.total));
+const esc=s=>{if(s===null||s===undefined)return '';const str=String(s).replace(/"/g,'""');return /[",\n]/.test(str)?`"${str}"`:str;};
+const header=['question','category','points','correct','total','accuracyPct'];
+const lines=[header.join(',')].concat(rows.map(r=>[r.question,r.category,r.points,r.correct,r.total,r.total?Math.round(r.correct/r.total*100):0].map(esc).join(',')));
+const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+const url=URL.createObjectURL(blob);
+const a=document.createElement('a');
+a.href=url;a.download='semakau-gap-analysis-summary.csv';
+document.body.appendChild(a);a.click();a.remove();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+</script>
+</body>
+</html>
